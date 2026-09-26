@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55c6349139a5cb84dbf43340aeed48be, type: 3}
+  m_Name: Item_skip_order
+  m_EditorClassIdentifier: 
+  itemId: skip_order
+  displayName: "\u6362\u624B\u4EE4"
+  description: "\u8BA9\u7D27\u63A5\u5728\u4F60\u4E4B\u540E\u884C\u52A8\u7684\u90A3\u540D\u5BF9\u624B\u8DF3\u8FC7\u4E00\u56DE\u5408\u3002"
+  rarity: 3
+  category: "\u8282\u594F"
+  sortOrder: 0
+  enabled: 1
+  effect: 8
+  requiresTarget: 0
+  targetScope: 1
+  riskDelta: 0
+  radius: 0
+  durationTurns: 0
+  shieldCharges: 1
+  refreshDisplayAfterModify: 1
+  dropWeight: 5
+  canBeStartingItem: 0

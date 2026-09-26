@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f8537adb0cbfae4aa7fcfbc5e27e576, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: 
+  totalSeats: 4
+  humanPlayerCount: 1
+  seatAnglesDegrees:
+  - 45
+  - 135
+  - 225
+  - 315
+  seatStandRadius: 1.62
+  seatDisplayNames:
+  - "\u7EA2\u96F7"
+  - "\u84DD\u7130"
+  - "\u9752\u5F15"
+  - "\u91D1\u7259"
+  startingLives: 3
+  clearRevealedOnHit: 0
+  startingItemCount: 2
+  maxInventorySize: 6
+  maxItemsPerTurn: 1
+  maxTurns: 0
+  turnTimeLimitSeconds: 0
+  revealEndsTurn: 1
+  flagEndsTurn: 0
+  itemUseEndsTurn: 0
+  driftEnabled: 1
+  driftProfile: {fileID: 11400000, guid: 64b0fa8bd72dad449b2eb40031900924, type: 2}
+  sharedBoard: 1
+  publishHover: 1
+  hoverSyncInterval: 0.12
+  itemUseIsSecret: 1
+  itemUseAnimationVisible: 0
+  probeRefreshesPublicDisplay: 0
+  difficulty: {fileID: 11400000, guid: 891f5fa3e68b5614683d06a113e9c200, type: 2}
+  gacha: {fileID: 11400000, guid: 9f9e983b0725be24a91d2216a7a11365, type: 2}
+  colorRamp: {fileID: 11400000, guid: 6671ab5b9b3349e418ba1de21c74af3e, type: 2}
+  botThinkDelaySeconds: 0.9
+  botRiskTolerance: 0.45
+  botProbeAcceptThreshold: 0.2
+  botUseItemRiskThreshold: 0.35
+  botSabotageChance: 0.35
+  botProbeBeforeRevealChance: 0.3
+  botProbeChancePerRound: 0.04
+  botDecreaseTargetRisk: 0.3
+  autoPlayLocalSeat: 0
+  defaultPort: 7788
+  connectTimeoutSeconds: 10
+  explosionShakeStrength: 0.5

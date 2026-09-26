@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c903c4c3c5ddb94089cb9940fb3d9a0, type: 3}
+  m_Name: Difficulty_Beginner
+  m_EditorClassIdentifier: 
+  displayName: "\u521D\u7EA7"
+  description: "9x9\uFF0C\u5E73\u5747\u98CE\u9669 12.3%\uFF08\u5BF9\u9F50\u4F20\u7EDF\u626B\u96F7\u521D\u7EA7\uFF09\u3002"
+  columns: 9
+  rows: 9
+  baseRisk: 0.123
+  riskVariance: 0.1
+  clusterDensity: 0.06
+  clusterBoost: 2.6
+  clusterRadius: 3.5
+  guaranteedSafeRatio: 0.08
+  safeRiskCeiling: 0.02
+  revealAllAtStart: 1
+  startRevealedCount: 0
+  neighborNumbersAreLive: 0

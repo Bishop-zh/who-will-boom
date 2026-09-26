@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55c6349139a5cb84dbf43340aeed48be, type: 3}
+  m_Name: Item_sabotage
+  m_EditorClassIdentifier: 
+  itemId: sabotage
+  displayName: "\u683D\u8D43\u5668"
+  description: "\u6697\u4E2D\u63D0\u9AD8\u5BF9\u624B\u67D0\u4E2A\u683C\u5B50 30%
+    \u7684\u771F\u5B9E\u7206\u70B8\u6982\u7387\uFF0C\u4E14\u4E0D\u5237\u65B0\u4ED6\u7684\u663E\u793A\u503C\u3002"
+  rarity: 1
+  category: "\u6270\u52A8"
+  sortOrder: 0
+  enabled: 1
+  effect: 1
+  requiresTarget: 1
+  targetScope: 1
+  riskDelta: 0.3
+  radius: 0
+  durationTurns: 0
+  shieldCharges: 1
+  refreshDisplayAfterModify: 0
+  dropWeight: 15
+  canBeStartingItem: 0

@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3aafca110d27f294ea74a8b2c713e583, type: 3}
+  m_Name: Skin_gray_shell
+  m_EditorClassIdentifier: 
+  skinId: gray_shell
+  displayName: "\u7070\u8272\u70AE\u5F39"
+  bodyType: 3
+  bodyColor: {r: 0.46, g: 0.47, b: 0.5, a: 1}
+  bodyColorB: {r: 0.33, g: 0.34, b: 0.37, a: 1}
+  bodySmoothness: 0.62
+  bodyMetallic: 0.7
+  bandColor: {r: 0.7, g: 0.62, b: 0.3, a: 1}
+  gloveColor: {r: 0.36, g: 0.55, b: 0.92, a: 1}
+  bootColor: {r: 0.13, g: 0.13, b: 0.16, a: 1}
+  fuseColor: {r: 0.54, g: 0.42, b: 0.29, a: 1}
+  emblem: 1
+  emblemColor: {r: 0.42, g: 0.62, b: 0.98, a: 1}
+  hat: 0
+  hatColor: {r: 0.3, g: 0.3, b: 0.36, a: 1}
+  eyeScale: 1
+  pupilColor: {r: 0.08, g: 0.08, b: 0.1, a: 1}
+  grumpy: 1

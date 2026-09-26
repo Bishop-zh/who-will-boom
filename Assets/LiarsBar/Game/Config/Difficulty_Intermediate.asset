@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c903c4c3c5ddb94089cb9940fb3d9a0, type: 3}
+  m_Name: Difficulty_Intermediate
+  m_EditorClassIdentifier: 
+  displayName: "\u4E2D\u7EA7"
+  description: "12x10\uFF0C\u5E73\u5747\u98CE\u9669 15.6%\uFF08\u5BF9\u9F50\u4F20\u7EDF\u626B\u96F7\u4E2D\u7EA7\uFF09\u3002"
+  columns: 12
+  rows: 10
+  baseRisk: 0.156
+  riskVariance: 0.12
+  clusterDensity: 0.06
+  clusterBoost: 2.6
+  clusterRadius: 3.5
+  guaranteedSafeRatio: 0.08
+  safeRiskCeiling: 0.02
+  revealAllAtStart: 1
+  startRevealedCount: 0
+  neighborNumbersAreLive: 0

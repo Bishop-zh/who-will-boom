@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55c6349139a5cb84dbf43340aeed48be, type: 3}
+  m_Name: Item_shield
+  m_EditorClassIdentifier: 
+  itemId: shield
+  displayName: "\u9632\u7206\u62A4\u76FE"
+  description: "\u62B5\u6321\u4E00\u6B21\u7206\u70B8\uFF0C\u4E0D\u635F\u5931\u673A\u4F1A\u3002"
+  rarity: 1
+  category: "\u9632\u62A4"
+  sortOrder: 0
+  enabled: 1
+  effect: 3
+  requiresTarget: 0
+  targetScope: 0
+  riskDelta: 0
+  radius: 0
+  durationTurns: 0
+  shieldCharges: 1
+  refreshDisplayAfterModify: 1
+  dropWeight: 16
+  canBeStartingItem: 1

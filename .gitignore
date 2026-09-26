@@ -1,0 +1,45 @@
+# Unity generated state
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/MemoryCaptures/
+/Recordings/
+
+# Local builds and captures
+/Build/
+/Preview/
+/*.log
+
+# Generated IDE files
+/.vs/
+/.vscode/
+/*.csproj
+/*.sln
+/*.slnx
+/*.pidb
+/*.booproj
+/*.svd
+/*.pdb
+/*.mdb
+/*.opendb
+/*.VC.db
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.swp
+
+# Imported UI product has no public redistribution grant in its included terms.
+/Assets/ES/
+/Assets/ES.meta
+
+# Local reports and embedded editor tooling are not part of the game source snapshot.
+/Docs/_report_*/
+/Docs/*.docx
+/Packages/com.coplaydev.unity-mcp/
+
+/Docs/_template_render/

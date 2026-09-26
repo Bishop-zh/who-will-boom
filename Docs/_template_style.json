@@ -1,0 +1,86 @@
+{
+  "input": "C:\\demo\\u3D\\Who will BOOM\\Docs\\\u6e38\u620f\u8f6f\u4ef6\u5f00\u53d1\u5927\u4f5c\u4e1a\u62a5\u544a\u6a21\u677f_\u8f6c\u6362\u7248.docx",
+  "fonts_by_char_count": {
+    "\u7b49\u7ebf": 7191,
+    "\u5b8b\u4f53": 2
+  },
+  "direct_run_formatting_runs": 352,
+  "direct_paragraph_formatting_paragraphs": 127,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 18,
+      "text": "\u76ee\u5f55",
+      "style": "TOC Heading"
+    },
+    {
+      "para_index": 123,
+      "text": "\u88684-1 java\u6e90\u6587\u4ef6\u53ca\u5176\u529f\u80fd\u56fe",
+      "style": "Normal"
+    },
+    {
+      "para_index": 131,
+      "text": "\u2026\u2026",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "\u5b66\u6821\u4ee3\u53f7",
+        "style": "Normal"
+      },
+      {
+        "para_index": 1,
+        "run_text": "   10538      ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 1,
+        "run_text": "          ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 1,
+        "run_text": "         ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 1,
+        "run_text": "\u5bc6",
+        "style": "Normal"
+      }
+    ],
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 2,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 6,
+        "text": "\u6e38\u620f\u5f00\u53d1\u5927\u4f5c\u4e1a\u62a5\u544a",
+        "style": "Normal"
+      },
+      {
+        "para_index": 7,
+        "text": "",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}
