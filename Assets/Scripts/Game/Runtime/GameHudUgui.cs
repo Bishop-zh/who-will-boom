@@ -727,9 +727,9 @@ namespace BombTavern.Runtime
             _selectedItemName.text = $"[{selected + 1}] {def.displayName}";
             _selectedItemName.color = RarityColor(def.rarity);
             _selectedItemDescription.text = def.description;
-            _selectedItemPrompt.text = def.requiresTarget
-                ? "对准目标格后按 E 使用"
-                : "按 E 立即使用";
+            _selectedItemPrompt.text = def.effect == ItemEffectType.DiamondFlux
+                ? "距边缘至少 2 格 · 按 E 使用"
+                : def.requiresTarget ? "对准目标格后按 E 使用" : "按 E 立即使用";
         }
 
         void RefreshPulse(GameSession s)
@@ -1085,6 +1085,8 @@ namespace BombTavern.Runtime
                     return $"{Name(e)} 探明 ({e.x},{e.y}) → {Pct(e.value)}";
                 case GameEventType.CellRiskModified:
                     return $"{Name(e)} 用 [{e.message}] 改动 ({e.x},{e.y})";
+                case GameEventType.AreaRiskModified:
+                    return $"{Name(e)} 用 [{e.message}] 扰动了 ({e.x},{e.y}) 周围";
                 case GameEventType.RowScanned:
                     return $"{Name(e)} 扫描第 {e.y} 行";
                 case GameEventType.AreaScanned:
@@ -1120,6 +1122,7 @@ namespace BombTavern.Runtime
                     return UiTheme.Success;
                 case GameEventType.CellProbed:
                 case GameEventType.CellRiskModified:
+                case GameEventType.AreaRiskModified:
                     return UiTheme.Accent;
                 default:
                     return UiTheme.TextMid;

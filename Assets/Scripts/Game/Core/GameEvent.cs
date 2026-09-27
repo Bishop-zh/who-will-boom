@@ -26,6 +26,8 @@ namespace BombTavern.Core
         /// <summary>当前行动者的悬停格子发生变化（公开信息）。</summary>
         HoverChanged,
         GameOver,
+        /// <summary>范围道具改变了真实风险；value 为道具效果类型。</summary>
+        AreaRiskModified,
     }
 
     /// <summary>一条对局事件。</summary>

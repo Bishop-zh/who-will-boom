@@ -1,3 +1,4 @@
+using BombTavern.Config;
 using BombTavern.Core;
 using UnityEngine;
 
@@ -81,6 +82,28 @@ namespace BombTavern.Runtime
                 case GameEventType.AreaScanned:
                     ScanArea(e.seatIndex, e.x, e.y, color);
                     break;
+
+                case GameEventType.AreaRiskModified:
+                    PulseRiskArea(e);
+                    break;
+            }
+        }
+
+        void PulseRiskArea(GameEvent e)
+        {
+            bool diamond = (ItemEffectType)(int)e.value == ItemEffectType.DiamondFlux;
+            var color = diamond ? new Color(.78f, .5f, 1f) : UiTheme.Danger;
+            int radius = diamond ? 2 : 1;
+            int done = 0;
+            for (int dy = -radius; dy <= radius; dy++)
+            {
+                for (int dx = -radius; dx <= radius; dx++)
+                {
+                    int distance = Mathf.Abs(dx) + Mathf.Abs(dy);
+                    if (diamond && (distance == 0 || distance > 2)) continue;
+                    Pulse(e.seatIndex, e.x + dx, e.y + dy, color, itemStrength);
+                    if (++done >= maxCellsPerEvent) return;
+                }
             }
         }
 

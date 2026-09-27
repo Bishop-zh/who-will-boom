@@ -190,6 +190,7 @@ namespace BombTavern.Runtime
                 case GameEventType.RowScanned:
                 case GameEventType.AreaScanned:
                 case GameEventType.CellRiskModified:
+                case GameEventType.AreaRiskModified:
                     Play(Sfx.ItemUse, 0.75f);
                     break;
 

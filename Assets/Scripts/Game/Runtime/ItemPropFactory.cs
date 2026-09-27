@@ -40,6 +40,8 @@ namespace BombTavern.Runtime
                 case ItemEffectType.ScanArea: BuildMagnifier(t); break;
                 case ItemEffectType.DecreaseRisk: BuildCoolant(t); break;
                 case ItemEffectType.IncreaseRisk: BuildVial(t); break;
+                case ItemEffectType.AreaIncreaseRisk: BuildSprayer(t); break;
+                case ItemEffectType.DiamondFlux: BuildFluxCrystal(t); break;
                 case ItemEffectType.Shield: BuildShield(t); break;
                 case ItemEffectType.FreezeDrift: BuildIce(t); break;
                 case ItemEffectType.RevealNeighbors: BuildFlashlight(t); break;
@@ -96,6 +98,28 @@ namespace BombTavern.Runtime
             Part(t, PrimitiveType.Cylinder, new Vector3(0f, 0.030f, 0f), new Vector3(0.016f, 0.016f, 0.016f), Glass);
             Part(t, PrimitiveType.Cube, new Vector3(0f, 0.046f, 0f), new Vector3(0.020f, 0.016f, 0.020f), Dark);
             Part(t, PrimitiveType.Sphere, new Vector3(0f, 0.058f, 0f), Vector3.one * 0.014f, Brass);
+        }
+
+        /// <summary>九宫格喷雾：红色罐体与三个喷嘴。</summary>
+        static void BuildSprayer(Transform t)
+        {
+            Part(t, PrimitiveType.Cylinder, Vector3.zero, new Vector3(.042f, .066f, .042f), Red);
+            Part(t, PrimitiveType.Cylinder, new Vector3(0f, .04f, 0f),
+                new Vector3(.048f, .012f, .048f), Brass);
+            for (int i = -1; i <= 1; i++)
+                Part(t, PrimitiveType.Cylinder, new Vector3(i * .025f, .052f, 0f),
+                    new Vector3(.008f, .023f, .008f), Steel);
+        }
+
+        /// <summary>菱形扰动器：中空框与紫色晶体。</summary>
+        static void BuildFluxCrystal(Transform t)
+        {
+            var violet = new Color(.7f, .38f, .95f);
+            Part(t, PrimitiveType.Cube, Vector3.zero, new Vector3(.082f, .082f, .022f), Brass,
+                new Vector3(0f, 0f, 45f));
+            Part(t, PrimitiveType.Cube, new Vector3(0f, 0f, .016f),
+                new Vector3(.058f, .058f, .018f), Dark, new Vector3(0f, 0f, 45f));
+            Part(t, PrimitiveType.Sphere, new Vector3(0f, 0f, .032f), Vector3.one * .038f, violet);
         }
 
         /// <summary>护盾：圆角盾牌 + 盾钉。</summary>

@@ -23,6 +23,10 @@ namespace BombTavern.Config
         RevealNeighbors,
         [Tooltip("换手：强制把当前回合交给指定的下一名玩家")]
         SkipTurn,
+        [Tooltip("九宫格增险：中心加成更高，真实概率变化不刷新旧读数")]
+        AreaIncreaseRisk,
+        [Tooltip("空心菱形：中心外的 12 格发生大幅正负波动")]
+        DiamondFlux,
     }
 
     /// <summary>道具可以作用在谁的盘面上。</summary>
@@ -125,6 +129,8 @@ namespace BombTavern.Config
             {
                 case ItemEffectType.IncreaseRisk:
                 case ItemEffectType.DecreaseRisk:
+                case ItemEffectType.AreaIncreaseRisk:
+                case ItemEffectType.DiamondFlux:
                     if (riskDelta <= 0f) return $"{itemId}: 风险调整量必须大于 0（方向由效果类型决定）";
                     break;
 
@@ -140,6 +146,11 @@ namespace BombTavern.Config
                     if (shieldCharges < 1) return $"{itemId}: 护盾次数至少为 1";
                     break;
             }
+
+            if (effect == ItemEffectType.AreaIncreaseRisk && radius != 1)
+                return $"{itemId}: 九宫格增险的 radius 必须为 1";
+            if (effect == ItemEffectType.DiamondFlux && radius != 2)
+                return $"{itemId}: 空心菱形的 radius 必须为 2";
 
             if (enabled && dropWeight <= 0f && canBeStartingItem)
                 return $"{itemId}: 掉落权重为 0 却允许作为初始道具，会导致它只能开局拿到";

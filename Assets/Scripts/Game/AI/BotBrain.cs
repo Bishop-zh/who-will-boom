@@ -59,7 +59,8 @@ namespace BombTavern.AI
             bool canUseItem = _config.maxItemsPerTurn <= 0 || me.itemsUsedThisTurn < _config.maxItemsPerTurn;
 
             // 1) 局面尚可时，考虑用增险道具暗算领先的对手
-            if (canUseItem && TryPlanSabotage(session, me, out int sabSlot, out int sabSeat, out int sx, out int sy))
+            if (canUseItem && TryPlanSabotage(session, me, bestIdx,
+                    out int sabSlot, out int sabSeat, out int sx, out int sy))
                 return GameCommand.UseItem(Seat, sabSlot, sx, sy, sabSeat, session.TurnIndex);
 
             // 2) 拖得越久越不敢相信屏幕上的旧颜色：按轮次递增的概率先探查一次。
@@ -164,7 +165,7 @@ namespace BombTavern.AI
                 if (_belief[i] > 1f) _belief[i] = 1f;
         }
 
-        bool TryPlanSabotage(GameSession session, PlayerState me,
+        bool TryPlanSabotage(GameSession session, PlayerState me, int ownNextCell,
             out int slot, out int targetSeat, out int x, out int y)
         {
             slot = -1;
@@ -176,12 +177,15 @@ namespace BombTavern.AI
             if (me.lives <= 1) return false;                 // 自身处境危险时不浪
             if (session.AliveCount() <= 1) return false;
 
-            // 先确认手里真的有可对外的增险道具，再掷骰（避免白白消耗随机数）
+            // 先确认手里有对外的风险道具，再掷骰（避免白白消耗随机数）。
             for (int i = 0; i < me.inventory.Count; i++)
             {
                 var d = me.inventory[i].definition;
                 if (d == null || me.inventory[i].remainingUses <= 0) continue;
-                if (d.effect == ItemEffectType.IncreaseRisk && d.targetScope != ItemTargetScope.SelfBoard)
+                if ((d.effect == ItemEffectType.IncreaseRisk ||
+                     d.effect == ItemEffectType.AreaIncreaseRisk ||
+                     d.effect == ItemEffectType.DiamondFlux) &&
+                    d.targetScope != ItemTargetScope.SelfBoard)
                 {
                     slot = i;
                     break;
@@ -200,19 +204,46 @@ namespace BombTavern.AI
             }
             if (bestSeat < 0) return false;
 
-            // 目标格：对手自己最可能去翻的那一格（显示风险最低）
+            // 共用盘面下无法只陷害一个人：选对手可能会翻的低风险区域，
+            // 同时避开自己本回合准备翻的格子，减少立刻踩到自己陷阱的情况。
             var ob = session.PlayerAt(bestSeat).board;
             var cells = ob.RawCells;
+            var effect = me.inventory[slot].definition.effect;
             int idx = -1;
-            float lowest = float.MaxValue;
+            float highest = float.MinValue;
             for (int i = 0; i < cells.Length; i++)
             {
                 if (cells[i].revealed || cells[i].flagged || cells[i].blasted) continue;
-                if (cells[i].displayedRisk < lowest)
+                int cx = i % ob.Columns, cy = i / ob.Columns;
+                if (effect == ItemEffectType.DiamondFlux &&
+                    (cx < 2 || cy < 2 || cx >= ob.Columns - 2 || cy >= ob.Rows - 2)) continue;
+                float score = 0f;
+                int affected = 0;
+                bool hitsOwnNext = false;
+                int radius = effect == ItemEffectType.DiamondFlux ? 2 :
+                    effect == ItemEffectType.AreaIncreaseRisk ? 1 : 0;
+                for (int dy = -radius; dy <= radius; dy++)
                 {
-                    lowest = cells[i].displayedRisk;
-                    idx = i;
+                    for (int dx = -radius; dx <= radius; dx++)
+                    {
+                        if (effect == ItemEffectType.DiamondFlux &&
+                            (System.Math.Abs(dx) + System.Math.Abs(dy) > 2 || (dx == 0 && dy == 0))) continue;
+                        int tx = cx + dx, ty = cy + dy;
+                        if (!ob.InBounds(tx, ty)) continue;
+                        int target = ob.Index(tx, ty);
+                        if (target == ownNextCell) hitsOwnNext = true;
+                        var cell = cells[target];
+                        if (cell.revealed || cell.blasted) continue;
+                        score += 1f - cell.displayedRisk;
+                        affected++;
+                    }
                 }
+                if (hitsOwnNext || affected == 0) continue;
+                score /= affected;
+                score += affected * 0.015f; // 大范围道具优先投到仍有价值的完整区域
+                if (score <= highest) continue;
+                highest = score;
+                idx = i;
             }
             if (idx < 0) return false;
 

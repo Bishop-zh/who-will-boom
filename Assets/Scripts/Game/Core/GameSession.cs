@@ -500,6 +500,74 @@ namespace BombTavern.Core
                     return true;
                 }
 
+                case ItemEffectType.AreaIncreaseRisk:
+                {
+                    int changed = 0;
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            int x = cmd.x + dx, y = cmd.y + dy;
+                            if (!board.InBounds(x, y)) continue;
+                            var cell = board.Get(x, y);
+                            if (cell.revealed || cell.blasted) continue;
+                            float delta = def.riskDelta * (dx == 0 && dy == 0 ? 1.5f : 1f);
+                            board.ModifyTrueRisk(x, y, delta, false, Drift);
+                            changed++;
+                        }
+                    }
+                    if (changed == 0) return false;
+                    p.totalModifies++;
+                    Raise(new GameEvent
+                    {
+                        type = GameEventType.AreaRiskModified, seatIndex = p.seatIndex,
+                        x = cmd.x, y = cmd.y, value = (int)def.effect,
+                        message = def.displayName, secret = Config.itemUseIsSecret,
+                    });
+                    return true;
+                }
+
+                case ItemEffectType.DiamondFlux:
+                {
+                    // 完整的曼哈顿半径 2 菱形恰好有 12 个非中心格。
+                    if (cmd.x < 2 || cmd.y < 2 || cmd.x >= board.Columns - 2 || cmd.y >= board.Rows - 2)
+                        return false;
+                    var targets = new List<int>(12);
+                    for (int dy = -2; dy <= 2; dy++)
+                    {
+                        for (int dx = -2; dx <= 2; dx++)
+                        {
+                            int distance = Math.Abs(dx) + Math.Abs(dy);
+                            if (distance == 0 || distance > 2) continue;
+                            int x = cmd.x + dx, y = cmd.y + dy;
+                            var cell = board.Get(x, y);
+                            if (!cell.revealed && !cell.blasted) targets.Add(board.Index(x, y));
+                        }
+                    }
+                    if (targets.Count == 0) return false;
+                    // 先洗牌再分配升降险，避免整个区域只朝一个方向变化。
+                    for (int i = targets.Count - 1; i > 0; i--)
+                    {
+                        int j = _rng.NextInt(0, i + 1);
+                        int temp = targets[i]; targets[i] = targets[j]; targets[j] = temp;
+                    }
+                    int increaseCount = (targets.Count + 1) / 2;
+                    for (int i = 0; i < targets.Count; i++)
+                    {
+                        int x = targets[i] % board.Columns, y = targets[i] / board.Columns;
+                        float delta = _rng.Range(def.riskDelta * 0.5f, def.riskDelta);
+                        board.ModifyTrueRisk(x, y, i < increaseCount ? delta : -delta, false, Drift);
+                    }
+                    p.totalModifies++;
+                    Raise(new GameEvent
+                    {
+                        type = GameEventType.AreaRiskModified, seatIndex = p.seatIndex,
+                        x = cmd.x, y = cmd.y, value = (int)def.effect,
+                        message = def.displayName, secret = Config.itemUseIsSecret,
+                    });
+                    return true;
+                }
+
                 case ItemEffectType.Shield:
                 {
                     p.shieldCharges += def.shieldCharges < 1 ? 1 : def.shieldCharges;

@@ -952,6 +952,7 @@ namespace BombTavern.Runtime
                 case GameEventType.CellRevealed:
                 case GameEventType.CellProbed:
                 case GameEventType.CellRiskModified:
+                case GameEventType.AreaRiskModified:
                 case GameEventType.RowScanned:
                 case GameEventType.AreaScanned:
                 case GameEventType.CellFlagged:
