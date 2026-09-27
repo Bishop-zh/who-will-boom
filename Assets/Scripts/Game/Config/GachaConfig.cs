@@ -12,7 +12,7 @@ namespace BombTavern.Config
     {
         [Header("基础掉落概率（每名玩家独立）")]
         [Tooltip("开局为每名玩家分配掉落概率的基准值。")]
-        [Range(0f, 1f)] public float baseFindChance = 0.18f;
+        [Range(0f, 1f)] public float baseFindChance = 0.22f;
 
         [Tooltip("每名玩家掉落概率相对基准值的随机浮动幅度（±）。用于制造「运气好坏」的个体差异。")]
         [Range(0f, 0.5f)] public float perPlayerChanceVariance = 0.07f;
@@ -23,13 +23,13 @@ namespace BombTavern.Config
 
         [Header("保底机制")]
         [Tooltip("软保底起点：连续未掉落达到该次数后，掉落概率开始逐步提升。")]
-        [Range(0, 40)] public int softPityStart = 6;
+        [Range(0, 40)] public int softPityStart = 5;
 
         [Tooltip("软保底每超出一次，掉落概率增加的绝对值。")]
         [Range(0f, 0.3f)] public float softPityStep = 0.06f;
 
         [Tooltip("硬保底：连续未掉落达到该次数时必定掉落。")]
-        [Range(1, 60)] public int hardPityThreshold = 14;
+        [Range(1, 60)] public int hardPityThreshold = 12;
 
         [Tooltip("成功掉落道具后，是否把保底计数清零。")]
         public bool resetPityOnDrop = true;

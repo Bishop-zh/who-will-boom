@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd0a4c7b71adc6549a46a0424d36bdf6, type: 3}
   m_Name: Gacha_Default
   m_EditorClassIdentifier: 
-  baseFindChance: 0.18
+  baseFindChance: 0.22
   perPlayerChanceVariance: 0.07
   minFindChance: 0.03
   maxFindChance: 0.6
-  softPityStart: 6
+  softPityStart: 5
   softPityStep: 0.06
-  hardPityThreshold: 14
+  hardPityThreshold: 12
   resetPityOnDrop: 1
   resetPityWhenInventoryFull: 0
   dropPool: {fileID: 11400000, guid: 9ee0f33639931f54586cb71d5b634168, type: 2}
