@@ -47,7 +47,7 @@ namespace BombTavern.Runtime
         Button _rulesButton;
         Button _scanButton;
         TMP_Text _voiceTestStatus;
-        TMP_Text _rulesText;
+        GameRulesTutorial _tutorial;
         VoiceChatManager _voice;
         bool _settingsOpen;
         readonly List<Button> _modeButtons = new List<Button>();
@@ -63,6 +63,7 @@ namespace BombTavern.Runtime
             Build();
             RefreshSelection(true);
             if (HasCommandLineArg("-btOpenSettings")) ToggleSettings();
+            _tutorial.ShowFirstTime();
         }
 
         void Build()
@@ -78,6 +79,8 @@ namespace BombTavern.Runtime
             BuildLoopFooter();
             BuildSettingsPanel();
             BuildGameSetupPanel();
+            _tutorial = _safe.gameObject.AddComponent<GameRulesTutorial>();
+            _tutorial.Configure(_safe);
             ApplyLayout();
         }
 
@@ -177,15 +180,8 @@ namespace BombTavern.Runtime
             UiKit.Size(_driftButton.GetComponent<RectTransform>(), h: 44f);
             UiKit.Size(_turnTimeButton.GetComponent<RectTransform>(), h: 44f);
 
-            _rulesButton = UiKit.Btn(_settingsPanel, "游戏规则介绍", ToggleRules);
+            _rulesButton = UiKit.Btn(_settingsPanel, "查看完整规则", ShowTutorial);
             UiKit.Size(_rulesButton.GetComponent<RectTransform>(), h: 44f);
-            _rulesText = UiKit.Paragraph(_settingsPanel,
-                "颜色显示的是公开概率，但概率会在每回合后隐藏偏移，且轮次越高偏移越大。\n" +
-                "轮到你时在限时内翻格、插旗或使用道具；超时将自动翻开一格。踩中会损失生命，归零后观战。\n" +
-                "数字键 1—6 选择道具，E 键使用。联机语音默认按住 V，也可改为自动声控。",
-                UiTheme.FontCaption, UiTheme.TextMid, TextAnchor.MiddleLeft);
-            UiKit.Size(_rulesText.rectTransform, h: 118f);
-            _rulesText.gameObject.SetActive(false);
 
             _settingsValue = UiKit.Paragraph(_settingsPanel, "", UiTheme.FontCaption, UiTheme.TextMid,
                 TextAnchor.MiddleCenter);
@@ -330,9 +326,9 @@ namespace BombTavern.Runtime
             Click();
         }
 
-        void ToggleRules()
+        void ShowTutorial()
         {
-            if (_rulesText != null) _rulesText.gameObject.SetActive(!_rulesText.gameObject.activeSelf);
+            _tutorial?.Show();
             Click();
         }
 
@@ -637,8 +633,12 @@ namespace BombTavern.Runtime
         void Update()
         {
             if (_owner == null) return;
-            if (_settingsOpen && Input.GetKeyDown(KeyCode.Escape)) ToggleSettings();
-            else if (_ruleSetupOpen && Input.GetKeyDown(KeyCode.Escape)) HideGameSetup();
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (_tutorial != null && _tutorial.IsOpen) _tutorial.Close();
+                else if (_settingsOpen) ToggleSettings();
+                else if (_ruleSetupOpen) HideGameSetup();
+            }
             if (_settingsOpen) RefreshVoiceTest();
             if (_lastScreen != new Vector2Int(Screen.width, Screen.height) || _lastSafeArea != Screen.safeArea) ApplyLayout();
             RefreshSelection(false);

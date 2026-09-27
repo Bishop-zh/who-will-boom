@@ -189,7 +189,7 @@ namespace BombTavern.Runtime
         Button _voiceModeButton;
         Button _rulesButton;
         TMP_Text _voiceTestStatus;
-        TMP_Text _rulesText;
+        GameRulesTutorial _tutorial;
         TMP_Text _summary;
         UiModalAnimator _modalAnimator;
         VoiceChatManager _voice;
@@ -272,15 +272,8 @@ namespace BombTavern.Runtime
             _voiceModeButton = UiKit.Btn(_panel, "", ToggleVoiceMode);
             UiKit.Size(_voiceModeButton.GetComponent<RectTransform>(), h: 48f);
 
-            _rulesButton = UiKit.Btn(_panel, "游戏规则介绍", ToggleRules);
+            _rulesButton = UiKit.Btn(_panel, "查看完整规则", ShowTutorial);
             UiKit.Size(_rulesButton.GetComponent<RectTransform>(), h: 48f);
-            _rulesText = UiKit.Paragraph(_panel,
-                "每位玩家轮流选择格子；概率颜色是上次公开的信息，会随回合发生隐藏偏移。\n" +
-                "限时结束仍未操作时，系统会自动翻开一格。踩中会损失生命，生命归零进入观战。\n" +
-                "数字键 1—6 拿出道具，E 键使用；V 键按住发言，也可切换为自动声控。",
-                UiTheme.FontCaption, UiTheme.TextMid, TextAnchor.MiddleLeft);
-            UiKit.Size(_rulesText.rectTransform, h: 118f);
-            _rulesText.gameObject.SetActive(false);
 
             _summary = UiKit.Paragraph(_panel, "", UiTheme.FontCaption, UiTheme.TextLo,
                 TextAnchor.MiddleCenter);
@@ -319,6 +312,8 @@ namespace BombTavern.Runtime
                     : "离开联机对局后，你的角色会由 AI 接管。";
             var note = UiKit.Paragraph(matchPage, exitHint, UiTheme.FontBody, UiTheme.TextMid);
             UiKit.Size(note.rectTransform, h: 72f);
+            _tutorial = root.gameObject.AddComponent<GameRulesTutorial>();
+            _tutorial.Configure(root);
         }
 
         void Update()
@@ -339,7 +334,8 @@ namespace BombTavern.Runtime
             }
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (_open) Close();
+                if (_tutorial != null && _tutorial.IsOpen) _tutorial.Close();
+                else if (_open) Close();
                 else Open();
             }
 
@@ -385,9 +381,9 @@ namespace BombTavern.Runtime
             RefreshVoiceTest();
         }
 
-        void ToggleRules()
+        void ShowTutorial()
         {
-            if (_rulesText != null) _rulesText.gameObject.SetActive(!_rulesText.gameObject.activeSelf);
+            _tutorial?.Show();
         }
 
         void ExitToMenu()
