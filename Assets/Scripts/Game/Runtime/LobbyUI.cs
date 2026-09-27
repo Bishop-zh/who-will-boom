@@ -26,6 +26,7 @@ namespace BombTavern.Runtime
         readonly TMP_Text[] _seatStatus = new TMP_Text[4];
         RectTransform _clientControls;
         Vector2Int _lastScreen;
+        Rect _lastSafeArea;
         string _lastFingerprint;
         int _lastDotStep = -1;
 
@@ -180,7 +181,7 @@ namespace BombTavern.Runtime
             bool show = ShouldShow();
             if (_canvas.gameObject.activeSelf != show) _canvas.gameObject.SetActive(show);
             if (!show) return;
-            if (_lastScreen != new Vector2Int(Screen.width, Screen.height)) ApplyLayout();
+            if (_lastScreen != new Vector2Int(Screen.width, Screen.height) || _lastSafeArea != Screen.safeArea) ApplyLayout();
             Refresh(false);
             int dots = Mathf.FloorToInt(Time.unscaledTime * 2f) % 4;
             if (_lastDotStep != dots && _title != null)
@@ -193,10 +194,12 @@ namespace BombTavern.Runtime
         void ApplyLayout()
         {
             _lastScreen = new Vector2Int(Screen.width, Screen.height);
+            _lastSafeArea = Screen.safeArea;
             bool compact = UiKit.CompactLayout;
             _panel.anchorMin = _panel.anchorMax = _panel.pivot = new Vector2(0.5f, 0.5f);
             _panel.anchoredPosition = Vector2.zero;
             _panel.sizeDelta = new Vector2(820f, 790f);
+            _panel.localScale = Vector3.one * UiKit.FitScale(_panel.sizeDelta);
         }
 
         void Refresh(bool force)

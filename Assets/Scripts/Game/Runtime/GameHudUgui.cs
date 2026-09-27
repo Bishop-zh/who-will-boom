@@ -845,6 +845,9 @@ namespace BombTavern.Runtime
 
         // ============================================================ 结算
         RectTransform _gameOver;
+        RectTransform _resultCard;
+        Vector2Int _resultScreen;
+        Rect _resultSafeArea;
         TMP_Text _goTitle, _goSub;
         readonly TMP_Text[] _goRows = new TMP_Text[GameSession.MaxSeats];
         bool _goShown;
@@ -866,6 +869,7 @@ namespace BombTavern.Runtime
 
             var bg = UiKit.Panel(overlay, "ResultCard");
             var box = bg.rectTransform;
+            _resultCard = box;
             box.anchorMin = box.anchorMax = box.pivot = new Vector2(0.5f, 0.5f);
             box.anchoredPosition = Vector2.zero;
             box.sizeDelta = new Vector2(1120f, 0f);
@@ -893,7 +897,8 @@ namespace BombTavern.Runtime
             {
                 var card = UiKit.Panel(box, "Standing_" + i, card: true);
                 UiKit.Size(card.rectTransform, h: 82);
-                if (i == 0) card.color = UiTheme.AccentHi;
+                if (i == 0)
+                    card.sprite = UiKit.ChamferSprite(UiTheme.Surface3, UiTheme.AccentHi, 10, 2);
                 for (int col = 0; col < 5; col++)
                     _resultCells[i, col] = MakeResultCell(card.rectTransform, "", col, widths, i == 0 ? UiTheme.AccentHi : UiTheme.TextMid);
                 var name = _resultCells[i, 1].rectTransform;
@@ -944,6 +949,15 @@ namespace BombTavern.Runtime
                 if (_goShown) _gameOver.SetAsLastSibling();
             }
             if (!_goShown) return;
+            var screen = new Vector2Int(Screen.width, Screen.height);
+            if ((screen != _resultScreen || Screen.safeArea != _resultSafeArea) && _resultCard != null)
+            {
+                _resultScreen = screen;
+                _resultSafeArea = Screen.safeArea;
+                LayoutRebuilder.ForceRebuildLayoutImmediate(_resultCard);
+                float height = Mathf.Max(1f, LayoutUtility.GetPreferredHeight(_resultCard));
+                _resultCard.localScale = Vector3.one * UiKit.FitScale(new Vector2(1120f, height));
+            }
 
             bool won = s.WinnerSeat == director.localSeat;
             _goTitle.text = won ? "你 活 到 了 最 后" : "对 局 结 束";

@@ -55,6 +55,7 @@ namespace BombTavern.Runtime
         int _lastMode = -1;
         string _lastSkin;
         Vector2Int _lastScreen;
+        Rect _lastSafeArea;
 
         public void Configure(PreGameMenu owner)
         {
@@ -639,7 +640,7 @@ namespace BombTavern.Runtime
             if (_settingsOpen && Input.GetKeyDown(KeyCode.Escape)) ToggleSettings();
             else if (_ruleSetupOpen && Input.GetKeyDown(KeyCode.Escape)) HideGameSetup();
             if (_settingsOpen) RefreshVoiceTest();
-            if (_lastScreen != new Vector2Int(Screen.width, Screen.height)) ApplyLayout();
+            if (_lastScreen != new Vector2Int(Screen.width, Screen.height) || _lastSafeArea != Screen.safeArea) ApplyLayout();
             RefreshSelection(false);
             if (_scanButton != null && _owner.ModeIndex == 2)
             {
@@ -709,17 +710,26 @@ namespace BombTavern.Runtime
         void ApplyLayout()
         {
             _lastScreen = new Vector2Int(Screen.width, Screen.height);
+            _lastSafeArea = Screen.safeArea;
             bool compact = UiKit.CompactLayout;
             float side = compact ? 540f : 600f;
-            float y = compact ? -104f : -118f;
+            float y = UiKit.IsMobile ? 0f : compact ? -104f : -118f;
+            float panelScale = UiKit.IsMobile
+                ? UiKit.FitScale(new Vector2(1f, 760f), 240f)
+                : 1f;
 
             SetAnchor(_left, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
                 new Vector2(0f, 0.5f), new Vector2(UiTheme.S4, y), new Vector2(side, compact ? 700f : 760f));
             SetAnchor(_right, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
                 new Vector2(1f, 0.5f), new Vector2(-UiTheme.S4, y), new Vector2(side + 30f, compact ? 760f : 830f));
+            _left.localScale = Vector3.one * panelScale;
+            _right.localScale = Vector3.one * panelScale;
             SetAnchor(_footer, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f), new Vector2(0f, UiTheme.S4),
                 new Vector2(compact ? 900f : 1080f, 68f));
+            TavernSettingsLayout.FitToScreen(_settingsPanel);
+            if (_ruleSetupPanel != null)
+                _ruleSetupPanel.localScale = Vector3.one * UiKit.FitScale(_ruleSetupPanel.sizeDelta);
         }
 
         static void SetAnchor(RectTransform rt, Vector2 min, Vector2 max, Vector2 pivot,

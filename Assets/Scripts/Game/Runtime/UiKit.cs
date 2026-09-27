@@ -179,6 +179,29 @@ namespace BombTavern.Runtime
 
         public static bool CompactLayout => ReferenceScreenSize.x < 1500f || ReferenceScreenSize.y < 820f;
 
+        /// <summary>Keep fixed-size modal layouts inside the canvas safe area.</summary>
+        public static float FitScale(Vector2 contentSize, float margin = 32f)
+        {
+            if (contentSize.x <= 0f || contentSize.y <= 0f) return 1f;
+            Vector2 available = ReferenceResolution;
+            if (Screen.width > 0 && Screen.height > 0)
+            {
+                Vector2 reference = ReferenceResolution;
+                float widthRatio = Screen.width / reference.x;
+                float heightRatio = Screen.height / reference.y;
+                float match = IsMobile ? 0.15f : 0.5f;
+                float canvasScale = Mathf.Pow(2f, Mathf.Lerp(
+                    Mathf.Log(widthRatio, 2f), Mathf.Log(heightRatio, 2f), match));
+                Rect safe = Screen.safeArea;
+                float safeWidth = safe.width > 0f ? safe.width : Screen.width;
+                float safeHeight = safe.height > 0f ? safe.height : Screen.height;
+                available = new Vector2(safeWidth / canvasScale, safeHeight / canvasScale);
+            }
+            return Mathf.Min(1f,
+                Mathf.Max(0.01f, available.x - margin) / contentSize.x,
+                Mathf.Max(0.01f, available.y - margin) / contentSize.y);
+        }
+
         public static void EnsureEventSystem()
         {
             if (Object.FindObjectOfType<EventSystem>() != null) return;
@@ -611,6 +634,8 @@ namespace BombTavern.Runtime
     {
         CanvasGroup _group;
         Coroutine _routine;
+        float _targetScale = 1f;
+        bool _opening;
 
         void Awake()
         {
@@ -626,8 +651,24 @@ namespace BombTavern.Runtime
 
         public void Hide() => Play(false);
 
+        public void SetTargetScale(float scale)
+        {
+            scale = Mathf.Max(0.01f, scale);
+            if (Mathf.Approximately(_targetScale, scale)) return;
+            _targetScale = scale;
+            if (_routine != null)
+            {
+                StopCoroutine(_routine);
+                _routine = StartCoroutine(Animate(_opening));
+            }
+            else
+                transform.localScale = Vector3.one * (gameObject.activeSelf && _group != null && _group.alpha > 0.001f
+                    ? _targetScale : _targetScale * 0.96f);
+        }
+
         void Play(bool opening)
         {
+            _opening = opening;
             if (_routine != null) StopCoroutine(_routine);
             _routine = StartCoroutine(Animate(opening));
         }
@@ -639,10 +680,10 @@ namespace BombTavern.Runtime
             float fromAlpha = _group.alpha;
             float toAlpha = opening ? 1f : 0f;
             Vector3 fromScale = transform.localScale;
-            Vector3 toScale = opening ? Vector3.one : Vector3.one * 0.96f;
+            Vector3 toScale = Vector3.one * _targetScale * (opening ? 1f : 0.96f);
             if (opening && fromAlpha <= 0.001f)
             {
-                fromScale = Vector3.one * 0.96f;
+                fromScale = Vector3.one * _targetScale * 0.96f;
                 transform.localScale = fromScale;
             }
             _group.interactable = opening;
@@ -656,7 +697,7 @@ namespace BombTavern.Runtime
                 yield return null;
             }
             _group.alpha = toAlpha;
-            transform.localScale = toScale;
+            transform.localScale = Vector3.one * _targetScale * (opening ? 1f : 0.96f);
             if (!opening) gameObject.SetActive(false);
             _routine = null;
         }

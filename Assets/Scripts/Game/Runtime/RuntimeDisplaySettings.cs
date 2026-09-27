@@ -196,6 +196,8 @@ namespace BombTavern.Runtime
         bool _open;
         bool _automationOpened;
         List<Vector2Int> _resolutions;
+        Vector2Int _settingsScreen;
+        Rect _settingsSafeArea;
 
         public void Configure(GameDirector director, RectTransform root)
         {
@@ -297,6 +299,8 @@ namespace BombTavern.Runtime
             image.transform.localScale = Vector3.one * 0.96f;
             _panel.gameObject.SetActive(false);
             TavernSettingsLayout.Arrange(_panel, Close, showMatchActions: true);
+            _settingsScreen = new Vector2Int(Screen.width, Screen.height);
+            _settingsSafeArea = Screen.safeArea;
             var audioPage = _panel.Find("音频");
             _voiceModeButton.transform.SetParent(audioPage, false);
             _voiceTestStatus.transform.SetParent(audioPage, false);
@@ -320,6 +324,13 @@ namespace BombTavern.Runtime
         void Update()
         {
             if (_director == null || _director.IsPregame || _director.Session == null) return;
+            var screen = new Vector2Int(Screen.width, Screen.height);
+            if (screen != _settingsScreen || Screen.safeArea != _settingsSafeArea)
+            {
+                _settingsScreen = screen;
+                _settingsSafeArea = Screen.safeArea;
+                TavernSettingsLayout.FitToScreen(_panel);
+            }
             if (_director.Session.IsOver) { if (_open) Close(); return; }
             if (!_automationOpened && HasCommandLineArg("-btOpenInGameSettings"))
             {

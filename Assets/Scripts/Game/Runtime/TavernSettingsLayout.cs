@@ -94,15 +94,34 @@ namespace BombTavern.Runtime
             foreach (var button in footer.GetComponentsInChildren<Button>())
                 UiKit.Size(button.GetComponent<RectTransform>(), w: 240, h: 60);
             StylePrimary(footer.GetChild(footer.childCount - 1).GetComponent<Button>());
+            FitToScreen(panel);
             Select(0);
             void Select(int index)
             {
                 for (int i = 0; i < pages.Length; i++)
                 {
                     pages[i].gameObject.SetActive(i == index);
-                    tabs[i].targetGraphic.color = i == index ? UiTheme.AccentHi : Color.white;
+                    var image = tabs[i].targetGraphic as Image;
+                    if (image != null)
+                    {
+                        image.sprite = i == index
+                            ? UiKit.ChamferSprite(UiTheme.AccentHi, UiTheme.TextHi, 9, 2)
+                            : UiKit.ChamferSprite(UiTheme.Surface2, UiTheme.Line, 9, 2);
+                        image.color = Color.white;
+                    }
+                    tabs[i].GetComponentInChildren<TMP_Text>(true).color =
+                        i == index ? UiTheme.Surface1 : UiTheme.TextHi;
                 }
             }
+        }
+
+        public static void FitToScreen(RectTransform panel)
+        {
+            if (panel == null) return;
+            float scale = UiKit.FitScale(panel.sizeDelta);
+            var animator = panel.GetComponent<UiModalAnimator>();
+            if (animator != null) animator.SetTargetScale(scale);
+            else panel.localScale = Vector3.one * scale;
         }
 
         public static void StylePrimary(Button button)

@@ -43,3 +43,6 @@ Thumbs.db
 /Packages/com.coplaydev.unity-mcp/
 
 /Docs/_template_render/
+
+# Original imported package kept outside Unity while using the built-in renderer.
+/ThirdPartyStaging/
