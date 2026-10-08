@@ -37,6 +37,8 @@ namespace BombTavern.Net
         /// 语音跟游戏同一条连接就不需要额外开 UDP 端口。
         /// </summary>
         Voice = 9,
+        /// <summary>房主拒绝重复昵称；客户端可在大厅改名后重新提交。</summary>
+        NameRejected = 10,
     }
 
     /// <summary>

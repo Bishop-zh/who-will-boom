@@ -17,9 +17,14 @@ namespace BombTavern.Runtime
         PreGameMenu _owner;
         Canvas _canvas;
         RectTransform _safe;
+        RectTransform _home;
+        RectTransform _statsPanel;
+        RectTransform _statsBlocker;
+        bool _setupVisible;
         RectTransform _left;
         RectTransform _right;
         RectTransform _footer;
+        RectTransform _setupBack;
         RectTransform _addressLabel;
         RectTransform _portRow;
         TMP_InputField _nameInput;
@@ -34,7 +39,6 @@ namespace BombTavern.Runtime
         bool _ruleSetupOpen;
         UiModalAnimator _settingsAnimator;
         TMP_Text _settingsValue;
-        Button _settingsButton;
         Slider _volumeSlider;
         Toggle _fullscreenToggle;
         Toggle _vsyncToggle;
@@ -73,39 +77,140 @@ namespace BombTavern.Runtime
             _canvas.transform.SetParent(transform, false);
             _safe = UiKit.CreateSafeAreaRoot(_canvas);
 
-            BuildBrand();
+            BuildHome();
             BuildRoster();
             BuildSessionPanel();
             BuildLoopFooter();
             BuildSettingsPanel();
             BuildGameSetupPanel();
+            BuildStatsPanel();
             _tutorial = _safe.gameObject.AddComponent<GameRulesTutorial>();
             _tutorial.Configure(_safe);
             ApplyLayout();
+            ShowSetup(false);
         }
 
-        void BuildBrand()
+        Sprite HomeSprite(Texture2D sheet, int x, int y, int width, int height)
         {
-            var brand = UiKit.Rect(_safe, "Brand", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(620f, 92f));
+            return Sprite.Create(sheet, new Rect(x, sheet.height - y - height, width, height),
+                new Vector2(.5f, .5f), 100f);
+        }
 
-            var title = UiKit.Label(brand, "谁 会 爆 炸", UiTheme.FontTitle + 14, UiTheme.Accent,
-                TextAnchor.UpperCenter);
-            title.fontStyle = FontStyles.Bold;
-            title.rectTransform.offsetMax = Vector2.zero;
-            title.rectTransform.offsetMin = new Vector2(0f, 34f);
+        void BuildHome()
+        {
+            _home = UiKit.Rect(_safe, "Home", Vector2.zero, Vector2.one,
+                new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
+            // 菜单左侧保留暗部，让金色按钮和标题在实时酒馆背景上清晰可读。
+            var shade = UiKit.Rect(_home, "LeftShade", new Vector2(0, 0), new Vector2(0, 1),
+                new Vector2(0, .5f), Vector2.zero, new Vector2(830, 0));
+            shade.gameObject.AddComponent<Image>().color = new Color(.025f, .016f, .011f, .68f);
+            var importedSheet = Resources.Load<Sprite>("BombTavern/UI/HomeMenuSheet");
+            var sheet = importedSheet != null ? importedSheet.texture : null;
+            if (sheet == null)
+            {
+                Debug.LogError("[主页] 找不到 HomeMenuSheet，检查 Resources/BombTavern/UI。");
+                return;
+            }
+            var logo = UiKit.Rect(_home, "Logo", new Vector2(0, 1), new Vector2(0, 1),
+                new Vector2(0, 1), new Vector2(72, -50), new Vector2(690, 345));
+            var logoImage = logo.gameObject.AddComponent<Image>();
+            logoImage.sprite = HomeSprite(sheet, 60, 24, 1140, 592);
+            logoImage.preserveAspect = true;
+            logoImage.raycastTarget = false;
 
-            var sub = UiKit.Label(brand, "多人概率扫雷 · 读懂信息，也要怀疑信息", UiTheme.FontBody,
-                UiTheme.TextMid, TextAnchor.LowerCenter);
-            sub.rectTransform.offsetMax = new Vector2(0f, -48f);
+            Sprite dark = HomeSprite(sheet, 18, 635, 590, 165);
+            Sprite gold = HomeSprite(sheet, 625, 635, 610, 165);
+            int[] iconX = { 50, 300, 535, 775, 995 };
+            int[] iconWidth = { 230, 210, 200, 200, 230 };
+            string[] labels = { "开始游戏", "游戏说明", "设置", "战绩统计", "退出游戏" };
+            System.Action[] actions = { () => ShowSetup(true), ShowTutorial, ToggleSettings, ShowStats, () => Application.Quit() };
+            for (int i = 0; i < labels.Length; i++)
+            {
+                bool exit = i == 4;
+                float top = exit ? 1260f : 505f + i * 145f;
+                float width = exit ? 370f : 600f;
+                float height = exit ? 100f : 132f;
+                var row = UiKit.Rect(_home, "Home_" + labels[i], new Vector2(0, 1), new Vector2(0, 1),
+                    new Vector2(0, 1), new Vector2(92, -top), new Vector2(width, height));
+                var image = row.gameObject.AddComponent<Image>();
+                image.sprite = i == 0 ? gold : dark;
+                image.type = Image.Type.Simple;
+                var button = row.gameObject.AddComponent<Button>();
+                int index = i;
+                button.onClick.AddListener(() => { Click(); actions[index](); });
+                var icon = UiKit.Rect(row, "Icon", new Vector2(0, .5f), new Vector2(0, .5f),
+                    new Vector2(0, .5f), new Vector2(exit ? 40 : 45, 0),
+                    new Vector2(exit ? 60 : 72, exit ? 60 : 72));
+                var iconImage = icon.gameObject.AddComponent<Image>();
+                iconImage.sprite = HomeSprite(sheet, iconX[i], 825, iconWidth[i], 190);
+                iconImage.preserveAspect = true;
+                iconImage.raycastTarget = false;
+                var label = UiKit.Label(row, labels[i], exit ? 36 : 42,
+                    i == 0 ? new Color(.15f, .085f, .025f) : new Color(1f, .89f, .72f),
+                    TextAnchor.MiddleLeft);
+                label.fontStyle = FontStyles.Bold;
+                label.rectTransform.offsetMin = new Vector2(exit ? 126 : 190, 0);
+                label.rectTransform.offsetMax = new Vector2(-42, 0);
+                label.raycastTarget = false;
+                if (!exit)
+                {
+                    var arrow = UiKit.Label(row, "›", 64, i == 0 ? new Color(.37f, .20f, .06f) : UiTheme.Accent,
+                        TextAnchor.MiddleCenter);
+                    arrow.rectTransform.anchorMin = arrow.rectTransform.anchorMax = new Vector2(1, .5f);
+                    arrow.rectTransform.pivot = new Vector2(1, .5f);
+                    arrow.rectTransform.anchoredPosition = new Vector2(-32, 0);
+                    arrow.rectTransform.sizeDelta = new Vector2(60, 90);
+                    arrow.raycastTarget = false;
+                }
+                else
+                {
+                    row.anchorMin = row.anchorMax = new Vector2(0, 0);
+                    row.pivot = new Vector2(0, 0);
+                    row.anchoredPosition = new Vector2(92, 70);
+                }
+            }
+        }
 
-            _settingsButton = UiKit.Btn(brand, "设置", ToggleSettings);
-            var settingsRt = _settingsButton.GetComponent<RectTransform>();
-            settingsRt.anchorMin = new Vector2(1f, 0.5f);
-            settingsRt.anchorMax = new Vector2(1f, 0.5f);
-            settingsRt.pivot = new Vector2(1f, 0.5f);
-            settingsRt.anchoredPosition = new Vector2(0f, -2f);
-            settingsRt.sizeDelta = new Vector2(126f, 38f);
+        void ShowSetup(bool show)
+        {
+            _setupVisible = show;
+            if (_home != null) _home.gameObject.SetActive(!show);
+            if (_left != null) _left.gameObject.SetActive(show);
+            if (_right != null) _right.gameObject.SetActive(show);
+            if (_footer != null) _footer.gameObject.SetActive(show);
+            if (_setupBack != null) _setupBack.gameObject.SetActive(show);
+        }
+
+        void BuildStatsPanel()
+        {
+            _statsBlocker = UiKit.Rect(_safe, "StatsBlocker", Vector2.zero, Vector2.one,
+                new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
+            _statsBlocker.gameObject.AddComponent<Image>().color = new Color(.01f, .007f, .005f, .76f);
+            var panel = UiKit.Panel(_safe, "StatsPanel");
+            _statsPanel = panel.rectTransform;
+            _statsPanel.anchorMin = _statsPanel.anchorMax = _statsPanel.pivot = new Vector2(.5f, .5f);
+            _statsPanel.sizeDelta = new Vector2(760, 360);
+            UiKit.VBox(_statsPanel, 20, new RectOffset(36, 36, 30, 30));
+            UiKit.Size(UiKit.Label(_statsPanel, "战绩统计", UiTheme.FontTitle, UiTheme.Accent,
+                TextAnchor.MiddleCenter).rectTransform, h: 56);
+            UiKit.Size(UiKit.Paragraph(_statsPanel,
+                "目前游戏只保存每局结束时的结算结果，尚未记录跨局历史战绩。\n你可以在对局结束界面查看本局详细战绩。",
+                UiTheme.FontBody, UiTheme.TextMid, TextAnchor.MiddleCenter).rectTransform, h: 150);
+            UiKit.Size(UiKit.Btn(_statsPanel, "返回主页", HideStats).GetComponent<RectTransform>(), h: 55);
+            _statsPanel.gameObject.SetActive(false);
+            _statsBlocker.gameObject.SetActive(false);
+        }
+
+        void ShowStats()
+        {
+            _statsBlocker.gameObject.SetActive(true);
+            _statsPanel.gameObject.SetActive(true);
+        }
+
+        void HideStats()
+        {
+            _statsBlocker.gameObject.SetActive(false);
+            _statsPanel.gameObject.SetActive(false);
         }
 
         void BuildSettingsPanel()
@@ -606,6 +711,13 @@ namespace BombTavern.Runtime
             text.fontStyle = FontStyles.Bold;
             text.rectTransform.offsetMin = new Vector2(18f, 8f);
             text.rectTransform.offsetMax = new Vector2(-18f, -8f);
+
+            var back = UiKit.Btn(_safe, "‹  返回主页", () => { Click(); ShowSetup(false); });
+            var backRt = back.GetComponent<RectTransform>();
+            SetAnchor(backRt, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
+                new Vector2(UiTheme.S4, -35), new Vector2(260, 62));
+            // 返回按钮仅在第二层出现，由 ShowSetup 统一管理。
+            _setupBack = backRt;
         }
 
         void StartGame()
@@ -638,6 +750,8 @@ namespace BombTavern.Runtime
                 if (_tutorial != null && _tutorial.IsOpen) _tutorial.Close();
                 else if (_settingsOpen) ToggleSettings();
                 else if (_ruleSetupOpen) HideGameSetup();
+                else if (_statsPanel != null && _statsPanel.gameObject.activeSelf) HideStats();
+                else if (_setupVisible) ShowSetup(false);
             }
             if (_settingsOpen) RefreshVoiceTest();
             if (_lastScreen != new Vector2Int(Screen.width, Screen.height) || _lastSafeArea != Screen.safeArea) ApplyLayout();

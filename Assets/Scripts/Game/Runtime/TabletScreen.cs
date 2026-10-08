@@ -603,20 +603,13 @@ namespace BombTavern.Runtime
             }
             else
             {
-                // 幽灵视角（本地玩家已出局）：直接看**真实概率**。
-                // 出局的人没有行动权，看到真相不影响公平，反而让他有事可做 —— 当解说。
-                // 这也是「淘汰即流失」的解药：死了还能继续参与。
-                bool ghost = GhostMode;
-                float shown = cell.flagged ? 1f : (ghost ? cell.trueRisk : cell.displayedRisk);
+                // 观战与存活玩家看同一份公开概率，不泄露真实风险。
+                float shown = cell.flagged ? 1f : cell.displayedRisk;
 
                 color = ramp != null ? ramp.Evaluate(shown) : Color.Lerp(Color.green, Color.red, shown);
                 if (cell.flagged) color *= 0.35f;
 
-                // 幽灵视角压暗 + 偏冷色，和「活人看到的过期颜色」区分开，
-                // 否则玩家会分不清自己在看真相还是在看过期颜色。
-                if (ghost) color = Color.Lerp(color, new Color(0.45f, 0.72f, 1f), 0.35f);
-
-                emission = ghost ? emissiveIntensity * 1.15f : emissiveIntensity;
+                emission = emissiveIntensity;
             }
 
             var r = tile.tileRenderer;

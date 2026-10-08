@@ -449,7 +449,7 @@ namespace BombTavern.Runtime
             destination.AddRange(part);
         }
 
-        /// <summary>确保每个座位都有回放音源，并挂到对应炸弹角色身上（语音带方位感）。</summary>
+        /// <summary>音源始终由管理器持有；角色出局或切换观战视角也不能停播。</summary>
         void SyncSeats()
         {
             if (director == null) return;
@@ -469,18 +469,18 @@ namespace BombTavern.Runtime
                 {
                     if (i == _localSeat) continue;      // 自己的声音不需要回放
                     if (_playbacks.TryGetValue(i, out var existing) && existing != null)
-                    { existing.volume = outputVolume; continue; }
+                    {
+                        existing.volume = outputVolume;
+                        var speaker = chars != null && i < chars.Length ? chars[i] : null;
+                        if (speaker != null) existing.transform.position = speaker.transform.position;
+                        continue;
+                    }
 
                     var character = chars != null && i < chars.Length ? chars[i] : null;
 
-                    // 角色可能被隐藏（第一人称隐藏自己）或已销毁：
-                    // 一旦挂到未激活的物体上，VoicePlayback.Awake 不会执行，
-                    // 拿到的 Source 就是 null，后面就会抛空引用。所以安全兜底挂到管理器自己身上。
-                    bool usableParent = character != null && character.gameObject.activeInHierarchy;
-                    var parent = usableParent ? character.transform : transform;
-
                     var go = new GameObject($"VoiceSeat_{i}");
-                    go.transform.SetParent(parent, false);
+                    go.transform.SetParent(transform, false);
+                    if (character != null) go.transform.position = character.transform.position;
 
                     var pb = go.AddComponent<VoicePlayback>();
                     if (pb == null || pb.Source == null)
@@ -497,7 +497,7 @@ namespace BombTavern.Runtime
                     pb.Source.volume = 1f;
                     _playbacks[i] = pb;
 
-                    if (usableParent) _characters[i] = character;
+                    if (character != null) _characters[i] = character;
                 }
             }
         }

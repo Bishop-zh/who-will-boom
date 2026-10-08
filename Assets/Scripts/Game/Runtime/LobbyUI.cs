@@ -21,7 +21,7 @@ namespace BombTavern.Runtime
         TMP_Text _title, _address, _help, _status, _connectLabel, _startHint;
         readonly TMP_Text[] _seatRows = new TMP_Text[4];
         readonly TMP_Text[] _notices = new TMP_Text[3];
-        TMP_InputField _addressInput;
+        TMP_InputField _addressInput, _nameInput;
         Button _connectButton, _startButton, _copyButton;
         readonly TMP_Text[] _seatStatus = new TMP_Text[4];
         RectTransform _clientControls;
@@ -78,6 +78,17 @@ namespace BombTavern.Runtime
             _help = UiKit.Paragraph(_panel, string.Empty, UiTheme.FontCaption, UiTheme.TextLo,
                 TextAnchor.MiddleCenter);
             UiKit.Size(_help.rectTransform, h: 48f);
+
+            var nameRow = UiKit.Rect(_panel, "NameRow", Vector2.zero, Vector2.one,
+                new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
+            UiKit.HBox(nameRow, UiTheme.S2, new RectOffset());
+            UiKit.Size(nameRow, h: 54f);
+            var nameLabel = UiKit.Label(nameRow, "我的昵称", UiTheme.FontBody, UiTheme.TextMid);
+            UiKit.Size(nameLabel.rectTransform, w: 130f, h: 50f);
+            _nameInput = UiKit.Input(nameRow, lan != null ? lan.localPlayerName : string.Empty, "输入未占用的昵称", 16);
+            UiKit.Size(_nameInput.GetComponent<RectTransform>(), w: 380f, h: 50f);
+            var claim = UiKit.Btn(nameRow, "确认昵称", ClaimName);
+            UiKit.Size(claim.GetComponent<RectTransform>(), w: 160f, h: 50f);
 
             var actions = UiKit.Rect(_panel, "LobbyActions", Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
@@ -166,6 +177,14 @@ namespace BombTavern.Runtime
             else lan.AddNotice(reason);
         }
 
+        void ClaimName()
+        {
+            if (lan == null || _nameInput == null) return;
+            if (lan.TryClaimLocalName(_nameInput.text))
+                lan.AddNotice("已提交昵称：“" + lan.localPlayerName + "”。");
+            Refresh(true);
+        }
+
         void CopyHostAddress()
         {
             if (lan == null || lan.ShareableAddresses.Count == 0) return;
@@ -198,7 +217,7 @@ namespace BombTavern.Runtime
             bool compact = UiKit.CompactLayout;
             _panel.anchorMin = _panel.anchorMax = _panel.pivot = new Vector2(0.5f, 0.5f);
             _panel.anchoredPosition = Vector2.zero;
-            _panel.sizeDelta = new Vector2(820f, 790f);
+            _panel.sizeDelta = new Vector2(820f, 850f);
             _panel.localScale = Vector3.one * UiKit.FitScale(_panel.sizeDelta);
         }
 

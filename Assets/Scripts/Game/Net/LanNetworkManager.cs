@@ -269,6 +269,12 @@ namespace BombTavern.Net
                 return;
             }
 
+            // 等 Hello 中的昵称通过房主校验后才占座，避免重名者占住空位。
+        }
+
+        void AcceptPeer(int peerId)
+        {
+
             if (_peerSeat.ContainsKey(peerId)) return;
 
             int seat = sessionStarted
@@ -301,6 +307,38 @@ namespace BombTavern.Net
                     SnapshotsSent++;
                 }
             }
+        }
+
+        public bool TryClaimLocalName(string proposed)
+        {
+            string name = (proposed ?? string.Empty).Trim();
+            if (name.Length == 0 || name.IndexOfAny(new[] { Sep, ';', '\r', '\n' }) >= 0)
+            {
+                AddNotice("昵称不能为空，且不能含有 | 或 ;。");
+                return false;
+            }
+            if (mode == GameMode.LanHost &&
+                !string.Equals(localPlayerName?.Trim(), name, StringComparison.OrdinalIgnoreCase) && NameTaken(name, -1))
+            {
+                AddNotice("昵称“" + name + "”已被占用，请换一个。");
+                return false;
+            }
+            localPlayerName = name;
+            if (SessionContext.Instance != null) SessionContext.Instance.playerName = name;
+            if (mode == GameMode.LanHost) RefreshRoster();
+            else if (mode == GameMode.LanClient && _transport != null)
+                _transport.Send(TcpLanTransport.HostPeerId,
+                    NetProtocol.Encode(NetMessageType.Hello, name + Sep + SkinIdOfLocal()));
+            return true;
+        }
+
+        bool NameTaken(string name, int exceptPeer)
+        {
+            if (string.Equals(localPlayerName?.Trim(), name, StringComparison.OrdinalIgnoreCase)) return true;
+            foreach (var kv in _peerInfo)
+                if (kv.Key != exceptPeer && string.Equals(kv.Value.name?.Trim(), name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
         }
 
         void OnPeerDisconnected(int peerId)
@@ -558,14 +596,27 @@ namespace BombTavern.Net
                 case NetMessageType.Hello:
                     if (mode == GameMode.LanHost)
                     {
-                        if (!_peerSeat.ContainsKey(peerId)) OnPeerConnected(peerId);
-
                         var p = payload.Split(Sep);
-                        string nm = p.Length > 0 && p[0].Length > 0 ? p[0] : "匿名炸弹";
+                        string nm = p.Length > 0 ? p[0].Trim() : string.Empty;
+                        if (nm.Length == 0 || nm.IndexOfAny(new[] { ';', '\r', '\n' }) >= 0 || NameTaken(nm, peerId))
+                        {
+                            _transport.Send(peerId, NetProtocol.Encode(NetMessageType.NameRejected,
+                                "昵称“" + nm + "”已被占用或无效，请在大厅修改昵称后重试。"));
+                            break;
+                        }
+                        if (!_peerSeat.ContainsKey(peerId)) AcceptPeer(peerId);
                         string skin = p.Length > 1 && p[1].Length > 0 ? p[1] : SkinIdOfLocal();
 
                         _peerInfo[peerId] = new SeatInfo(_peerSeat.TryGetValue(peerId, out int st) ? st : -1, nm, skin);
                         RefreshRoster();
+                    }
+                    break;
+
+                case NetMessageType.NameRejected:
+                    if (mode == GameMode.LanClient)
+                    {
+                        StatusText = "昵称未通过验证";
+                        AddNotice(payload);
                     }
                     break;
 
@@ -607,6 +658,8 @@ namespace BombTavern.Net
                 {
                     if (mode != GameMode.LanHost) break;
                     if (!GameCommand.TryParse(payload, out var cmd)) break;
+                    if (!_peerSeat.TryGetValue(peerId, out int commandSeat) ||
+                        commandSeat < 0 || cmd.seatIndex != commandSeat) break;
 
                     if (!director.ApplyAuthoritative(cmd))
                     {

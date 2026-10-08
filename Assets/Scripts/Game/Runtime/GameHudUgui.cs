@@ -648,16 +648,25 @@ namespace BombTavern.Runtime
 
         void RefreshHoverCard(GameSession s)
         {
-            if (interactor == null || interactor.Hovered == null || director.IsPregame || IsGhost(s))
+            bool spectating = IsGhost(s);
+            if (director.IsPregame || (!spectating && (interactor == null || interactor.Hovered == null)))
             {
                 if (_hoverCard.gameObject.activeSelf) _hoverCard.gameObject.SetActive(false);
                 return;
             }
 
-            var tile = interactor.Hovered;
+            int viewedSeat = director.SpectatorViewSeat;
+            if (spectating && (viewedSeat < 0 || s.HoverSeat != viewedSeat || s.CurrentSeat != viewedSeat))
+            {
+                _hoverCard.gameObject.SetActive(false);
+                return;
+            }
+            var tile = spectating ? null : interactor.Hovered;
+            int x = spectating ? s.HoverX : tile.x;
+            int y = spectating ? s.HoverY : tile.y;
 
             // 双保险：即便交互器放行了，也只显示自己面板上的格子
-            if (interactor.HoveredTablet != null &&
+            if (!spectating && interactor.HoveredTablet != null &&
                 !interactor.HoveredTablet.IsLocalPanel(director.localSeat))
             {
                 _hoverCard.gameObject.SetActive(false);
@@ -665,12 +674,12 @@ namespace BombTavern.Runtime
             }
 
             var board = s.SharedBoard;
-            if (tile.ownerSeat >= 0)
+            if (!spectating && tile.ownerSeat >= 0)
             {
                 var o = s.PlayerAt(tile.ownerSeat);
                 if (o != null) board = o.board;
             }
-            if (board == null || !board.InBounds(tile.x, tile.y))
+            if (board == null || !board.InBounds(x, y))
             {
                 _hoverCard.gameObject.SetActive(false);
                 return;
@@ -678,11 +687,11 @@ namespace BombTavern.Runtime
 
             if (!_hoverCard.gameObject.activeSelf) _hoverCard.gameObject.SetActive(true);
 
-            var cell = board.Get(tile.x, tile.y);
+            var cell = board.Get(x, y);
 
             if (cell.blasted)
             {
-                _hoverTitle.text = $"({tile.x},{tile.y})  已踩过";
+                _hoverTitle.text = $"({x},{y})  已踩过";
                 _hoverTitle.color = UiTheme.Danger;
                 _hoverSub.text = "该格已处理，不能再次选择";
                 return;
@@ -690,26 +699,26 @@ namespace BombTavern.Runtime
 
             if (cell.revealed)
             {
-                _hoverTitle.text = $"({tile.x},{tile.y})  已翻开";
+                _hoverTitle.text = $"({x},{y})  已翻开";
                 _hoverTitle.color = UiTheme.TextMid;
                 _hoverSub.text = $"相邻期望雷数 {cell.revealedExpectation:F1}";
                 return;
             }
 
-            var me = s.PlayerAt(director.localSeat);
+            var me = spectating ? null : s.PlayerAt(director.localSeat);
             float known = -1f;
             if (me != null && me.knownTruth != null)
             {
-                int idx = board.Index(tile.x, tile.y);
+                int idx = board.Index(x, y);
                 if (idx >= 0 && idx < me.knownTruth.Length) known = me.knownTruth[idx];
             }
 
             float shownRisk = known >= 0f ? known : cell.displayedRisk;
             string source = known >= 0f ? "探查概率" : "初始概率";
-            _hoverTitle.text = $"{source}  {Mathf.RoundToInt(shownRisk * 100f)}%";
+            _hoverTitle.text = $"{(spectating ? NameOf(viewedSeat) + "指向 · " : string.Empty)}{source}  {Mathf.RoundToInt(shownRisk * 100f)}%";
             _hoverTitle.color = UiTheme.TextHi;
 
-            _hoverSub.text = cell.flagged ? $"({tile.x},{tile.y}) · 已插旗" : $"格子 ({tile.x},{tile.y})";
+            _hoverSub.text = cell.flagged ? $"({x},{y}) · 已插旗" : $"格子 ({x},{y})";
         }
 
         void RefreshSelectedItem(GameSession s)

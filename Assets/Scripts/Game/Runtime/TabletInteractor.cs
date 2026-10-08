@@ -74,6 +74,17 @@ namespace BombTavern.Runtime
                 return;
             }
 
+            var localPlayer = director.Session.PlayerAt(director.localSeat);
+            if (localPlayer != null && localPlayer.eliminated)
+            {
+                if (_previous != null && HoveredTablet != null)
+                    HoveredTablet.SetLocalHover(-1, -1);
+                Hovered = null;
+                HoveredTablet = null;
+                _previous = null;
+                return;
+            }
+
             UpdateHover();
             HandleActions();
         }
