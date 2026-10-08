@@ -69,6 +69,7 @@ namespace BombTavern.Runtime
             AddAudioSlider(pages[1], "音效音量", "BombTavern.SfxVolume", 1f, v => { if (AudioDirector.Instance != null) AudioDirector.Instance.sfxVolume = v; });
             var note = UiKit.Paragraph(pages[3], "设置即时生效并自动保存。\n联机对局中打开设置不会暂停游戏。\n按住 V 发言；可在音频设置切换自动声控。", 23, UiTheme.TextMid);
             UiKit.Size(note.rectTransform, h: 140);
+            UiKit.Btn(pages[3], "退出游戏", () => { PlayerPrefs.Save(); Application.Quit(); }, danger: true);
             var footer = UiKit.Rect(panel, "Footer", new Vector2(0, 0), new Vector2(1, 0), new Vector2(.5f, 0), new Vector2(0, 30), new Vector2(-60, 60));
             var row = UiKit.HBox(footer, 18, new RectOffset()); row.childForceExpandWidth = true;
             UiKit.Btn(footer, "恢复默认", () =>
@@ -88,8 +89,7 @@ namespace BombTavern.Runtime
                 PlayerPrefs.Save();
                 close();
             });
-            UiKit.Btn(footer, "退出游戏", () => { PlayerPrefs.Save(); Application.Quit(); }, danger: true);
-            UiKit.Btn(footer, "应用", () => PlayerPrefs.Save());
+            UiKit.Btn(footer, "退出设置", () => { PlayerPrefs.Save(); close(); });
             UiKit.Btn(footer, "确定", () => { PlayerPrefs.Save(); close(); }, accent: true);
             foreach (var button in footer.GetComponentsInChildren<Button>())
                 UiKit.Size(button.GetComponent<RectTransform>(), w: 240, h: 60);

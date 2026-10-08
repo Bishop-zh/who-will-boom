@@ -70,8 +70,8 @@ namespace BombTavern.Runtime
         {
             get
             {
-                if (IsMobile) return MobileReference;
-                return PcReference;
+                float scale = Mathf.Clamp(PlayerPrefs.GetFloat("BombTavern.UiScale", 1f), .75f, 1.25f);
+                return (IsMobile ? MobileReference : PcReference) / scale;
             }
         }
 
@@ -745,6 +745,7 @@ namespace BombTavern.Runtime
     {
         public CanvasScaler scaler;
         Vector2Int _lastScreen;
+        float _lastUiScale;
 
         void Awake()
         {
@@ -754,12 +755,14 @@ namespace BombTavern.Runtime
 
         void Update()
         {
-            if (_lastScreen != new Vector2Int(Screen.width, Screen.height)) Apply();
+            if (_lastScreen != new Vector2Int(Screen.width, Screen.height) ||
+                !Mathf.Approximately(_lastUiScale, PlayerPrefs.GetFloat("BombTavern.UiScale", 1f))) Apply();
         }
 
         void Apply()
         {
             _lastScreen = new Vector2Int(Screen.width, Screen.height);
+            _lastUiScale = PlayerPrefs.GetFloat("BombTavern.UiScale", 1f);
             if (scaler == null) return;
             scaler.referenceResolution = UiKit.ReferenceResolution;
             scaler.matchWidthOrHeight = UiKit.IsMobile ? 0.15f : 0.5f;

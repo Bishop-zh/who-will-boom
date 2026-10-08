@@ -34,6 +34,7 @@ namespace BombTavern.Runtime
         TMP_Text _startLabel;
         RectTransform _settingsPanel;
         RectTransform _settingsBlocker;
+        SettingsPopupView _sharedSettings;
         RectTransform _ruleSetupPanel;
         RectTransform _ruleSetupBlocker;
         bool _ruleSetupOpen;
@@ -250,6 +251,12 @@ namespace BombTavern.Runtime
 
         void BuildSettingsPanel()
         {
+            _sharedSettings = SettingsPopupView.Attach(_safe, () => _settingsOpen = false, ShowTutorial);
+            if (_sharedSettings != null)
+            {
+                _settingsPanel = _sharedSettings.transform.Find("Panel") as RectTransform;
+                return;
+            }
             // 全屏遮罩把输入焦点锁在设置层，点击空白处也可关闭，符合网游常见的 modal 行为。
             var blocker = UiKit.Rect(_safe, "SettingsBlocker", Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
@@ -374,6 +381,10 @@ namespace BombTavern.Runtime
 
         void BuildGameSetupPanel()
         {
+            if (_mapButton == null) _mapButton = UiKit.Btn(_safe, "地图大小", CycleMap);
+            if (_bombButton == null) _bombButton = UiKit.Btn(_safe, "炸弹数量", CycleBombs);
+            if (_driftButton == null) _driftButton = UiKit.Btn(_safe, "概率偏移", CycleDrift);
+            if (_turnTimeButton == null) _turnTimeButton = UiKit.Btn(_safe, "回合限时", CycleTurnTime);
             _ruleSetupBlocker = UiKit.Rect(_safe, "GameSetupBlocker", Vector2.zero, Vector2.one,
                 new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
             _ruleSetupBlocker.gameObject.AddComponent<Image>().color = new Color(.015f, .01f, .008f, .78f);
@@ -434,6 +445,13 @@ namespace BombTavern.Runtime
 
         void ToggleSettings()
         {
+            if (_sharedSettings != null)
+            {
+                if (_sharedSettings.IsOpen) _sharedSettings.Close();
+                else { _settingsOpen = true; _sharedSettings.Open(); }
+                Click();
+                return;
+            }
             _settingsOpen = !_settingsOpen;
             if (!_settingsOpen && _voice != null && _voice.IsMicrophoneTestRunning)
                 _voice.StopMicrophoneTest();
@@ -576,7 +594,7 @@ namespace BombTavern.Runtime
             if (_volumeSlider != null) _volumeSlider.SetValueWithoutNotify(AudioListener.volume);
             if (_fullscreenToggle != null) _fullscreenToggle.SetIsOnWithoutNotify(Screen.fullScreen);
             if (_vsyncToggle != null) _vsyncToggle.SetIsOnWithoutNotify(QualitySettings.vSyncCount > 0);
-            _settingsValue.text = "鼠标拖拽转视角 · 左键翻格 · 右键插旗 · H 键切换托管";
+            if (_settingsValue != null) _settingsValue.text = "鼠标拖拽转视角 · 左键翻格 · 右键插旗 · H 键切换托管";
             var c = Context;
             if (c != null)
             {

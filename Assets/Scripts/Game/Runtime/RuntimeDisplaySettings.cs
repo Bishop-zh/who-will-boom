@@ -60,6 +60,9 @@ namespace BombTavern.Runtime
             int quality = PlayerPrefs.GetInt(QualityKey, Mathf.Max(0, QualitySettings.names.Length - 1));
             QualitySettings.SetQualityLevel(Mathf.Clamp(quality, 0, QualitySettings.names.Length - 1), true);
             QualitySettings.vSyncCount = PlayerPrefs.GetInt(VsyncKey, 1) > 0 ? 1 : 0;
+            Application.targetFrameRate = PlayerPrefs.GetInt("BombTavern.FrameRate", 120);
+            RenderSettings.ambientIntensity = Mathf.Lerp(.65f, 1.35f,
+                Mathf.Clamp01(PlayerPrefs.GetFloat("BombTavern.Brightness", .5f)));
 
             var native = Screen.currentResolution;
             int width = PlayerPrefs.GetInt(WidthKey, native.width > 0 ? native.width : 1920);
@@ -177,6 +180,7 @@ namespace BombTavern.Runtime
     public sealed class InGameSettingsUgui : MonoBehaviour
     {
         GameDirector _director;
+        SettingsPopupView _sharedSettings;
         RectTransform _panel;
         RectTransform _blocker;
         Button _modeButton;
@@ -208,6 +212,16 @@ namespace BombTavern.Runtime
 
         void Build(RectTransform root)
         {
+            _sharedSettings = SettingsPopupView.Attach(root, OnSharedClosed, ShowTutorial, _director, ExitToMenu);
+            if (_sharedSettings != null)
+            {
+                _panel = _sharedSettings.transform.Find("Panel") as RectTransform;
+                _settingsScreen = new Vector2Int(Screen.width, Screen.height);
+                _settingsSafeArea = Screen.safeArea;
+                _tutorial = root.gameObject.AddComponent<GameRulesTutorial>();
+                _tutorial.Configure(root);
+                return;
+            }
             _blocker = UiKit.Rect(root, "InGameSettingsBlocker", Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var shade = _blocker.gameObject.AddComponent<Image>();
@@ -344,6 +358,13 @@ namespace BombTavern.Runtime
 
         void Open()
         {
+            if (_sharedSettings != null)
+            {
+                _open = true;
+                _sharedSettings.Open();
+                SetInputCaptured(true);
+                return;
+            }
             _open = true;
             _resolutions = RuntimeDisplaySettings.ResolutionOptions();
             _blocker.gameObject.SetActive(true);
@@ -356,11 +377,23 @@ namespace BombTavern.Runtime
 
         void Close()
         {
+            if (_sharedSettings != null)
+            {
+                if (_sharedSettings.IsOpen) _sharedSettings.Close();
+                else OnSharedClosed();
+                return;
+            }
             if (!_open) return;
             _open = false;
             _blocker.gameObject.SetActive(false);
             _modalAnimator.Hide();
             if (_voice != null && _voice.IsMicrophoneTestRunning) _voice.StopMicrophoneTest();
+            SetInputCaptured(false);
+        }
+
+        void OnSharedClosed()
+        {
+            _open = false;
             SetInputCaptured(false);
         }
 
