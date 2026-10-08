@@ -49,6 +49,7 @@ namespace BombTavern.Runtime
             _close = close; _showRules = showRules; _director = director; _exitMatch = exitMatch;
             _panel = Find("Panel").GetComponent<RectTransform>();
             _animator = _panel.GetComponent<UiModalAnimator>();
+            if (_animator == null) _animator = _panel.gameObject.AddComponent<UiModalAnimator>();
             Bind("Shade", Close);
             Bind("Close", Close);
             Bind("TabDisplay", () => Select(0));

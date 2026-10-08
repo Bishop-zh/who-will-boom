@@ -38,14 +38,16 @@ namespace BombTavern.Runtime
             }
             _scroll = _panel.Find("RulesScrollViewport")?.GetComponent<ScrollRect>();
             _animator = _panel.GetComponent<UiModalAnimator>();
+            if (_animator == null) _animator = _panel.gameObject.AddComponent<UiModalAnimator>();
             var close = _panel.Find("Close")?.GetComponent<Button>();
-            if (_scroll == null || _animator == null || close == null)
+            if (_scroll == null || close == null)
             {
-                Debug.LogError("[游戏说明] RulesTutorial 预制体缺少滚动区、动画器或关闭按钮。");
-                return;
+                Debug.LogError("[游戏说明] RulesTutorial 预制体缺少滚动区或关闭按钮。");
             }
-            _blocker.GetComponent<Button>().onClick.AddListener(Close);
-            close.onClick.AddListener(Close);
+            var blockerButton = _blocker.GetComponent<Button>();
+            if (blockerButton == null) blockerButton = _blocker.gameObject.AddComponent<Button>();
+            blockerButton.onClick.AddListener(Close);
+            if (close != null) close.onClick.AddListener(Close);
             _blocker.gameObject.SetActive(false);
             _panel.GetComponent<CanvasGroup>().alpha = 0f;
             _panel.gameObject.SetActive(false);
@@ -268,7 +270,7 @@ namespace BombTavern.Runtime
             _blocker.SetAsLastSibling();
             _panel.SetAsLastSibling();
             _animator.Show();
-            _scroll.verticalNormalizedPosition = 1f;
+            if (_scroll != null) _scroll.verticalNormalizedPosition = 1f;
         }
 
         public void Close()

@@ -17,7 +17,12 @@ namespace BombTavern.EditorTools
         [MenuItem("工具/炸弹酒馆/10. 创建设置预制体", false, 20)]
         public static void CreateMissing()
         {
-            if (File.Exists(Prefab)) { Debug.Log("[设置预制体] 已存在，保留手工修改。"); return; }
+            if (File.Exists(Prefab))
+            {
+                RepairModalAnimators();
+                Debug.Log("[设置预制体] 已存在，保留手工修改。");
+                return;
+            }
             var importer = AssetImporter.GetAtPath(Sheet) as TextureImporter;
             if (importer == null) throw new FileNotFoundException("设置图集缺失", Sheet);
             importer.textureType = TextureImporterType.Sprite;
@@ -47,11 +52,39 @@ namespace BombTavern.EditorTools
                 foreach (var label in root.GetComponentsInChildren<TMP_Text>(true)) label.font = font;
                 Directory.CreateDirectory(Path.GetDirectoryName(Prefab));
                 PrefabUtility.SaveAsPrefabAsset(root, Prefab);
+                RepairModalAnimators();
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 Debug.Log("[设置预制体] 已创建 " + Prefab);
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [MenuItem("工具/炸弹酒馆/11. 修复弹窗预制体组件", false, 21)]
+        public static void RepairModalAnimators()
+        {
+            Repair(Prefab, "Panel");
+            Repair("Assets/Resources/BombTavern/Prefabs/UI/RulesTutorial.prefab", "RulesTutorialPanel");
+            AssetDatabase.SaveAssets();
+        }
+
+        static void Repair(string path, string panelName)
+        {
+            if (!File.Exists(path)) return;
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var panel = root.GetComponentsInChildren<RectTransform>(true)
+                    .FirstOrDefault(rect => rect.name == panelName);
+                if (panel == null) throw new InvalidOperationException("弹窗预制体缺少 " + panelName + "：" + path);
+                int missing = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(panel.gameObject);
+                if (missing > 0) GameObjectUtility.RemoveMonoBehavioursWithMissingScript(panel.gameObject);
+                if (panel.GetComponent<UiModalAnimator>() == null)
+                    panel.gameObject.AddComponent<UiModalAnimator>();
+                if (missing > 0) Debug.Log("[弹窗预制体] 已替换缺失动画组件：" + path);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
         }
 
         static SpriteMetaData Slice(string name, int x, int top, int width, int height, int border = 0)
