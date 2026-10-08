@@ -43,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -121,7 +121,175 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: HomeLogo
+      rect:
+        serializedVersion: 2
+        x: 60
+        y: 638
+        width: 1140
+        height: 592
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 051456398b2f44120800000000000000
+      internalID: 2397307776228737360
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HomeButtonDark
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 454
+        width: 590
+        height: 165
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b35ca48219b080e0800000000000000
+      internalID: -2269610723008293966
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HomeButtonGold
+      rect:
+        serializedVersion: 2
+        x: 625
+        y: 454
+        width: 610
+        height: 165
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f39addc2534e08200800000000000000
+      internalID: 180394902131943743
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HomeIconStart
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 239
+        width: 230
+        height: 190
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82d47147de36e4b50800000000000000
+      internalID: 6579305977140956456
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HomeIconRules
+      rect:
+        serializedVersion: 2
+        x: 300
+        y: 239
+        width: 210
+        height: 190
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cae9d5cdc32f58590800000000000000
+      internalID: -7672460046946689364
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HomeIconSettings
+      rect:
+        serializedVersion: 2
+        x: 535
+        y: 239
+        width: 200
+        height: 190
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5110b4c2b9f7bd140800000000000000
+      internalID: 4745526936804720917
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HomeIconStats
+      rect:
+        serializedVersion: 2
+        x: 775
+        y: 239
+        width: 200
+        height: 190
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c98f9a4377b0fd0a0800000000000000
+      internalID: -6854747501222037348
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HomeIconQuit
+      rect:
+        serializedVersion: 2
+        x: 995
+        y: 239
+        width: 230
+        height: 190
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccf2f4c7b5604b350800000000000000
+      internalID: 6031452790953291724
+      vertices: []
+      indices:
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -132,7 +300,15 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      HomeButtonDark: -2269610723008293966
+      HomeButtonGold: 180394902131943743
+      HomeIconQuit: 6031452790953291724
+      HomeIconRules: -7672460046946689364
+      HomeIconSettings: 4745526936804720917
+      HomeIconStart: 6579305977140956456
+      HomeIconStats: -6854747501222037348
+      HomeLogo: 2397307776228737360
   mipmapLimitGroupName:
   pSDRemoveMatte: 0
   userData:

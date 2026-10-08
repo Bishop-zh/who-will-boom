@@ -21,8 +21,41 @@ namespace BombTavern.Runtime
 
         public void Configure(RectTransform root)
         {
-            var imported = Resources.Load<Sprite>("BombTavern/UI/RulesTutorialSheet");
-            var sheet = imported != null ? imported.texture : null;
+            var prefab = Resources.Load<GameObject>("BombTavern/Prefabs/UI/RulesTutorial");
+            if (prefab == null)
+            {
+                ConfigureFallback(root);
+                return;
+            }
+
+            var view = Instantiate(prefab, root, false).GetComponent<RectTransform>();
+            _blocker = view != null ? view.Find("RulesTutorialBlocker") as RectTransform : null;
+            _panel = view != null ? view.Find("RulesTutorialPanel") as RectTransform : null;
+            if (_blocker == null || _panel == null)
+            {
+                Debug.LogError("[游戏说明] RulesTutorial 预制体缺少遮罩或面板。");
+                return;
+            }
+            _scroll = _panel.Find("RulesScrollViewport")?.GetComponent<ScrollRect>();
+            _animator = _panel.GetComponent<UiModalAnimator>();
+            var close = _panel.Find("Close")?.GetComponent<Button>();
+            if (_scroll == null || _animator == null || close == null)
+            {
+                Debug.LogError("[游戏说明] RulesTutorial 预制体缺少滚动区、动画器或关闭按钮。");
+                return;
+            }
+            _blocker.GetComponent<Button>().onClick.AddListener(Close);
+            close.onClick.AddListener(Close);
+            _blocker.gameObject.SetActive(false);
+            _panel.GetComponent<CanvasGroup>().alpha = 0f;
+            _panel.gameObject.SetActive(false);
+            FitToScreen();
+        }
+
+        // 仅用于首次生成预制体以及资源丢失时的回退。
+        void ConfigureFallback(RectTransform root)
+        {
+            var sheet = Resources.Load<Texture2D>("BombTavern/UI/RulesTutorialSheet");
             if (sheet == null)
             {
                 Debug.LogError("[游戏说明] 找不到 RulesTutorialSheet。");
@@ -40,6 +73,7 @@ namespace BombTavern.Runtime
             _panel.anchoredPosition = new Vector2(0f, -45f);
             AddImage(_panel, "Frame", sheet, 18, 363, 1217, 435, true,
                 new Vector4(65, 65, 65, 65));
+            _panel.gameObject.AddComponent<CanvasGroup>();
             _animator = _panel.gameObject.AddComponent<UiModalAnimator>();
 
             var logo = AddImage(_panel, "RulesTitle", sheet, 18, 2, 555, 290);

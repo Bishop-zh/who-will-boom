@@ -98,14 +98,49 @@ namespace BombTavern.Runtime
 
         void BuildHome()
         {
+            var prefab = Resources.Load<GameObject>("BombTavern/Prefabs/UI/HomeMenu");
+            if (prefab == null)
+            {
+                BuildHomeFallback();
+                return;
+            }
+
+            _home = Instantiate(prefab, _safe, false).GetComponent<RectTransform>();
+            if (_home == null)
+            {
+                Debug.LogError("[主页] HomeMenu 预制体缺少 RectTransform。");
+                return;
+            }
+            BindHomeButton("Home_开始游戏", () => ShowSetup(true));
+            BindHomeButton("Home_游戏说明", ShowTutorial);
+            BindHomeButton("Home_设置", ToggleSettings);
+            BindHomeButton("Home_战绩统计", ShowStats);
+            BindHomeButton("Home_退出游戏", () => Application.Quit());
+        }
+
+        void BindHomeButton(string childName, System.Action action)
+        {
+            var child = _home.Find(childName);
+            var button = child != null ? child.GetComponent<Button>() : null;
+            if (button == null)
+            {
+                Debug.LogError("[主页] 预制体中缺少按钮：" + childName);
+                return;
+            }
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => { Click(); action(); });
+        }
+
+        // 仅用于首次生成预制体以及资源丢失时的回退；正常运行使用可编辑的 HomeMenu.prefab。
+        void BuildHomeFallback()
+        {
             _home = UiKit.Rect(_safe, "Home", Vector2.zero, Vector2.one,
                 new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
             // 菜单左侧保留暗部，让金色按钮和标题在实时酒馆背景上清晰可读。
             var shade = UiKit.Rect(_home, "LeftShade", new Vector2(0, 0), new Vector2(0, 1),
                 new Vector2(0, .5f), Vector2.zero, new Vector2(830, 0));
             shade.gameObject.AddComponent<Image>().color = new Color(.025f, .016f, .011f, .68f);
-            var importedSheet = Resources.Load<Sprite>("BombTavern/UI/HomeMenuSheet");
-            var sheet = importedSheet != null ? importedSheet.texture : null;
+            var sheet = Resources.Load<Texture2D>("BombTavern/UI/HomeMenuSheet");
             if (sheet == null)
             {
                 Debug.LogError("[主页] 找不到 HomeMenuSheet，检查 Resources/BombTavern/UI。");

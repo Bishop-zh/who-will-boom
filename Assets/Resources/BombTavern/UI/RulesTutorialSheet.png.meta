@@ -43,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -121,7 +121,238 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: RulesFrame
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 456
+        width: 1217
+        height: 435
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 65, y: 65, z: 65, w: 65}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e2a74c01fbb4a6b0800000000000000
+      internalID: -5285893418658585886
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesLogo
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 962
+        width: 555
+        height: 290
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc4f6c326bd43c100800000000000000
+      internalID: 127030659176133839
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesClose
+      rect:
+        serializedVersion: 2
+        x: 1116
+        y: 902
+        width: 120
+        height: 109
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7698266aac6cb1e0800000000000000
+      internalID: -2180748640439986565
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesCard
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 298
+        width: 1218
+        height: 151
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 38, y: 38, z: 38, w: 38}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 500ae0c7cbee78ba0800000000000000
+      internalID: -6086633878065340411
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesStep
+      rect:
+        serializedVersion: 2
+        x: 594
+        y: 903
+        width: 244
+        height: 107
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 20, y: 20, z: 20, w: 20}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03d430553be4335b0800000000000000
+      internalID: -5389877796899959504
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesTarget
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 1014
+        width: 133
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad2b3cd6f33a64160800000000000000
+      internalID: 7009469362868564698
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesGear
+      rect:
+        serializedVersion: 2
+        x: 735
+        y: 1014
+        width: 133
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8ad0ea4ebc576900800000000000000
+      internalID: 677612241312340621
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesClipboard
+      rect:
+        serializedVersion: 2
+        x: 870
+        y: 1014
+        width: 112
+        height: 151
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b01b6fe83998b350800000000000000
+      internalID: 6032740170676768947
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesTrophy
+      rect:
+        serializedVersion: 2
+        x: 985
+        y: 1014
+        width: 126
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 019342cd2d2e28740800000000000000
+      internalID: 5152930318929639696
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesBulb
+      rect:
+        serializedVersion: 2
+        x: 1110
+        y: 1013
+        width: 140
+        height: 153
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7aae1ab1653e77960800000000000000
+      internalID: 7599792855181290151
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RulesNote
+      rect:
+        serializedVersion: 2
+        x: 265
+        y: 6
+        width: 720
+        height: 286
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e00ab262163a73a70800000000000000
+      internalID: 8806687233993842702
+      vertices: []
+      indices:
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -132,7 +363,18 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      RulesBulb: 7599792855181290151
+      RulesCard: -6086633878065340411
+      RulesClipboard: 6032740170676768947
+      RulesClose: -2180748640439986565
+      RulesFrame: -5285893418658585886
+      RulesGear: 677612241312340621
+      RulesLogo: 127030659176133839
+      RulesNote: 8806687233993842702
+      RulesStep: -5389877796899959504
+      RulesTarget: 7009469362868564698
+      RulesTrophy: 5152930318929639696
   mipmapLimitGroupName:
   pSDRemoveMatte: 0
   userData:
