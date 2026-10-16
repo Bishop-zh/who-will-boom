@@ -55,6 +55,17 @@ namespace BombTavern.Runtime
             _canvas.transform.SetParent(transform, false);
             var safe = UiKit.CreateSafeAreaRoot(_canvas);
 
+            var template = UiPrefabBindings.Load("LobbyPanel", safe, this);
+            if (template != null)
+            {
+                UiPrefabBindings.ButtonWithText(template, "确认昵称").onClick.AddListener(ClaimName);
+                UiPrefabBindings.ButtonWithText(template, "退出到主界面").onClick.AddListener(SessionContext.ReturnToMainMenu);
+                _copyButton.onClick.AddListener(CopyHostAddress);
+                _connectButton.onClick.AddListener(RetryConnect);
+                _startButton.onClick.AddListener(() => lan.StartGame());
+                ApplyLayout(); return;
+            }
+
             var image = UiKit.Panel(safe, "LobbyPanel");
             _panel = image.rectTransform;
             UiKit.VBox(_panel, 8, new RectOffset(30, 30, 22, 22));

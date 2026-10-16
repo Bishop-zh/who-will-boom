@@ -11,6 +11,7 @@ namespace BombTavern.Runtime
         Coroutine _routine;
         float _targetScale = 1f;
         bool _opening;
+        System.Action _hidden;
 
         void Awake()
         {
@@ -20,11 +21,22 @@ namespace BombTavern.Runtime
 
         public void Show()
         {
+            _hidden = null;
             gameObject.SetActive(true);
             Play(true);
         }
 
-        public void Hide() => Play(false);
+        public void Hide(System.Action completed = null)
+        {
+            _hidden = completed;
+            Play(false);
+        }
+
+        void OnDisable()
+        {
+            if (_routine != null) StopCoroutine(_routine);
+            _routine = null;
+        }
 
         public void SetTargetScale(float scale)
         {
@@ -62,7 +74,8 @@ namespace BombTavern.Runtime
                 transform.localScale = fromScale;
             }
             _group.interactable = opening;
-            _group.blocksRaycasts = opening;
+            // 淡出期间仍遮挡底层，完全隐藏后才释放输入。
+            _group.blocksRaycasts = true;
             while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
@@ -73,8 +86,14 @@ namespace BombTavern.Runtime
             }
             _group.alpha = toAlpha;
             transform.localScale = Vector3.one * _targetScale * (opening ? 1f : 0.96f);
-            if (!opening) gameObject.SetActive(false);
             _routine = null;
+            if (!opening)
+            {
+                var completed = _hidden;
+                _hidden = null;
+                gameObject.SetActive(false);
+                completed?.Invoke();
+            }
         }
     }
 }

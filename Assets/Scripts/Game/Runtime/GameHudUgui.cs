@@ -357,6 +357,11 @@ namespace BombTavern.Runtime
             _hoverTitle = UiKit.Label(box, "", UiTheme.FontHead, Color.white,
                 TextAnchor.MiddleCenter);
             _hoverTitle.fontStyle = FontStyles.Bold;
+            _hoverTitle.richText = false;
+            _hoverTitle.enableAutoSizing = true;
+            _hoverTitle.fontSizeMin = 14f;
+            _hoverTitle.fontSizeMax = UiTheme.FontHead;
+            _hoverTitle.overflowMode = TextOverflowModes.Ellipsis;
             UiKit.Size(_hoverTitle.rectTransform, h: 30f);
             _hoverSub = UiKit.Label(box, "", UiTheme.FontBody, UiTheme.TextMid,
                 TextAnchor.MiddleCenter);
@@ -691,7 +696,7 @@ namespace BombTavern.Runtime
 
             if (cell.blasted)
             {
-                _hoverTitle.text = $"({x},{y})  已踩过";
+                _hoverTitle.text = $"({x},{y})  已被 {NameOf(cell.blastedSeat)} 引爆";
                 _hoverTitle.color = UiTheme.Danger;
                 _hoverSub.text = "该格已处理，不能再次选择";
                 return;
@@ -868,6 +873,14 @@ namespace BombTavern.Runtime
 
         void BuildGameOver(RectTransform root)
         {
+            var template = UiPrefabBindings.Load("GameOver", root, this);
+            if (template != null)
+            {
+                UiPrefabBindings.ButtonWithText(template, "返回大厅").onClick.AddListener(OnBackToLobby);
+                _goRestartBtn.onClick.AddListener(OnRestart);
+                UiPrefabBindings.ButtonWithText(template, "详细战绩").onClick.AddListener(() => _showResultDetails = !_showResultDetails);
+                return;
+            }
             // 全屏模态层：拦住后面的道具栏与视角操作，
             // 让结算按钮成为唯一可交互目标。
             var overlay = UiKit.Rect(root, "GameOver", Vector2.zero, Vector2.one,

@@ -67,6 +67,13 @@ namespace BombTavern.Runtime
 
         /// <summary>对局初始化完成。</summary>
         public event Action<GameSession> SessionReady;
+        readonly MatchStatisticsTracker _statistics = new MatchStatisticsTracker();
+
+        void LateUpdate()
+        {
+            if (!Application.isBatchMode || Array.IndexOf(Environment.GetCommandLineArgs(), "-btStatsAcceptance") >= 0)
+                _statistics.Observe(Session, !pregameMode && !lobbyMode, mode, localSeat, MatchStatisticsStore.Local);
+        }
 
         /// <summary>
         /// 任意来源（本地玩家 / AI / 远端）的指令被权威接受后触发。

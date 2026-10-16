@@ -12,8 +12,8 @@ namespace BombTavern.Runtime
     ///   Idle/Aim → UseItem（使用道具）→ Idle
     ///   任意 → Stagger（踩到雷）→ Idle / Down（出局）
     ///
-    /// 实现方式：只驱动手臂 / 手 / 嘴巴 / 身体这几个节点的局部变换，
-    /// 不做骨骼动画，保证换皮肤（重建 Visual 节点）后依然可用。
+    /// 带骨骼角色通过 RiggedBombView 驱动 Animator 并叠加点按动作；
+    /// 程序化角色则直接驱动手臂、手、嘴巴和身体节点。
     /// </summary>
     [DisallowMultipleComponent]
     public class BombActionAnimator : MonoBehaviour
@@ -152,6 +152,15 @@ namespace BombTavern.Runtime
         void Enter(ActionState next, float duration)
         {
             state = next;
+            // 骨骼剪辑由 RiggedBombView 驱动，外层状态至少要保持到剪辑播完。
+            // 否则原来的 0.55 秒道具动作和 0.7 秒受击动作会提前切回待机。
+            var rigged = Rigged;
+            if (rigged != null && rigged.IsValid)
+            {
+                if (next == ActionState.Tap) duration = Mathf.Max(duration, rigged.tapSeconds);
+                else if (next == ActionState.UseItem) duration = Mathf.Max(duration, rigged.useItemSeconds);
+                else if (next == ActionState.Stagger) duration = Mathf.Max(duration, rigged.hitSeconds);
+            }
             _stateTimer = duration;
         }
 
@@ -166,6 +175,7 @@ namespace BombTavern.Runtime
         }
 
         RiggedBombView _rigged;
+        RiggedBombView _lastDrivenRigged;
 
         void Update()
         {
@@ -214,6 +224,12 @@ namespace BombTavern.Runtime
         /// </summary>
         void DriveRigged(RiggedBombView rigged)
         {
+            if (_lastDrivenRigged != rigged)
+            {
+                _lastDrivenRigged = rigged;
+                _lastRiggedState = (RiggedBombView.State)(-1);
+            }
+
             if (state != ActionState.Idle && state != ActionState.Down && state != ActionState.Aim)
             {
                 _stateTimer -= Time.deltaTime;
@@ -289,7 +305,7 @@ namespace BombTavern.Runtime
         static RiggedBombView.State MapState(ActionState s) => s switch
         {
             ActionState.Aim => RiggedBombView.State.Aim,
-            ActionState.Tap => RiggedBombView.State.Aim,       // 点格子复用「指向」的动作
+            ActionState.Tap => RiggedBombView.State.Tap,       // Aim 剪辑加一次前臂/手腕点按
             ActionState.UseItem => RiggedBombView.State.UseItem,
             ActionState.Stagger => RiggedBombView.State.Hit,
             ActionState.Down => RiggedBombView.State.Hit,

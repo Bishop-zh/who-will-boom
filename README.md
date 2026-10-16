@@ -41,10 +41,22 @@
 
 1. 使用 **Unity 2022.3.62f3c1** 打开仓库根目录，等待资源导入完成。
 2. 在编辑器中打开 `Assets/Scenes/BombTavern_Play.unity`，或通过菜单 **工具 → 炸弹酒馆 → 7. 构建 Windows 独立版** 构建 Windows 64 位播放器。
-3. 构建脚本位于 `Assets/Editor/Game/PlayerBuilder.cs`；当前输出目录是 `Build/WhoWillBOOM_2026-09-27/`。`Build/` 是本地构建产物，不随 Git 提交。也可使用命令行 `-executeMethod BombTavern.EditorTools.PlayerBuilder.BuildWindows` 构建。
+3. 构建脚本位于 `Assets/Editor/Game/PlayerBuilder.cs`；当前脚本输出目录是 `Build/WhoWillBOOM_2026-10-09/`。交付压缩包另外使用日期和中文修改内容命名。`Build/` 是本地构建产物，不随 Git 提交。也可使用命令行 `-executeMethod BombTavern.EditorTools.PlayerBuilder.BuildWindows` 构建。
 4. 联机时由一位玩家建房，其他玩家在主菜单加入。默认游戏端口为 **7788/TCP**；局域网 UDP 语音模式使用游戏端口加一。使用网络穿透工具时请转发实际设置的 TCP 端口，并在客户端填写可到达的主机地址。
 
 主要源码位于 `Assets/Scripts/Game/`：`Core/` 是规则与盘面，`AI/` 是机器人决策，`Net/` 是联机协议与传输，`Runtime/` 是场景驱动、界面、语音和音效，`Config/` 是可配置数据定义。
+
+## 战绩统计与界面微调
+
+主页“战绩统计”展示本机完成对局的总数、胜场、胜率、最高连胜、近期十局和单人/多人分布。点击近期记录可查看模式、结束时间、玩家昵称、回合数、翻格、踩雷和道具使用次数。统计由 `GameDirector` 观察实际对局结束状态：菜单 AI 演示、AI 座位及只收到已结束快照的晚到观战者不计入，同一局只保存一次；提前退出未完成对局也不计入。
+
+历史保存在 `Application.persistentDataPath/match-statistics-v1.json`，关闭游戏后保留。临时文件完成后原子替换主记录，并保留备份；读取到损坏主文件时尝试备份，两者都损坏时保留原文件并显示错误，不用空历史覆盖。累计总数独立保存，最多保留1000场详情，弹窗展示最近10场。旧版本没有保存的历史无法还原，新版从首次完成对局起累计。
+
+图表使用原生 UGUI：`StatisticsRingGraphic` 继承 `MaskableGraphic`，通过 `OnPopulateMesh(VertexHelper)` 按胜率划分环形几何；模式比例条用 `Image.Type.Filled` 的 `fillAmount` 更新。因此图表反映实际记录，可以在预制体中调整环宽、颜色和布局，无需外部图表插件。API 依据见 [Unity 网格生成说明](https://docs.unity3d.com/cn/2019.2/ScriptReference/UI.Graphic.OnPopulateMesh.html) 和 [Filled Image 说明](https://docs.unity3d.com/cn/2019.2/ScriptReference/UI.Image.Type.Filled.html)。
+
+八个页面预制体集中在 `Assets/Resources/BombTavern/Prefabs/UI/`：主页、游戏说明、设置、开始游戏二级页、创建对局规则、对局结束、等待连接和战绩统计。编辑器创建菜单只补建缺失文件；微调注意功能节点和布局组的约束，详见 `Docs/UI预制体调整说明.md`。
+
+设置页沿用在 Sprite Editor 手工保存的独立标题、主框及控件切片，重新拼装时不覆盖图集切片记录。主页与对局内共用此预制体；对局规则、结算和等待连接页统一使用现有金色边框与深棕底板。后台验证和未测范围见 `Docs/设置重拼与界面风格统一验收_2026-10-09.md`。
 
 ## 第三方资源说明
 

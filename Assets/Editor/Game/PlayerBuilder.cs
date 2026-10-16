@@ -15,7 +15,7 @@ namespace BombTavern.EditorTools
     public static class PlayerBuilder
     {
         const string PlayScene = "Assets/Scenes/BombTavern_Play.unity";
-        const string OutputDir = "Build/WhoWillBOOM_2026-10-08";
+        const string OutputDir = "Build/WhoWillBOOM_2026-10-10_爆痕标记与引爆者提示";
         const string ExeName = "BombTavern.exe";
 
         [MenuItem("工具/炸弹酒馆/7. 构建 Windows 独立版", false, 17)]

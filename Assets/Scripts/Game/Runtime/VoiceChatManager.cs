@@ -150,6 +150,17 @@ namespace BombTavern.Runtime
             ResetVad();
         }
 
+        public void SetOutputVolume(float value)
+        {
+            outputVolume = Mathf.Clamp01(value);
+            PlayerPrefs.SetFloat("BombTavern.VoiceVolume", outputVolume);
+            lock (_playbacks)
+            {
+                foreach (var playback in _playbacks.Values)
+                    if (playback != null) playback.volume = outputVolume;
+            }
+        }
+
         void Awake()
         {
             if (director == null) director = FindObjectOfType<GameDirector>();

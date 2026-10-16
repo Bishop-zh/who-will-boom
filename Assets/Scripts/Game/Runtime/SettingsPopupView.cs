@@ -18,8 +18,10 @@ namespace BombTavern.Runtime
         VoiceChatManager _voice;
         GameDirector _director;
         bool _open;
+        Vector2Int _labelScreen;
         int _page;
         readonly List<Vector2Int> _resolutions = new List<Vector2Int>();
+        string _expandedDropdown;
         static readonly Color Gold = new Color(1f, .78f, .36f);
         static readonly Color White = new Color(1f, .91f, .77f);
 
@@ -55,9 +57,21 @@ namespace BombTavern.Runtime
             Bind("TabDisplay", () => Select(0));
             Bind("TabAudio", () => Select(1));
             Bind("TabAssist", () => Select(2));
-            Bind("Resolution", CycleResolution);
-            Bind("WindowMode", CycleMode);
-            Bind("Quality", CycleQuality);
+            Bind("Resolution", () => ShowDropdown("Resolution", ResolutionLabels(), index =>
+            {
+                RuntimeDisplaySettings.SetResolution(_resolutions[index]);
+                Refresh();
+            }));
+            Bind("WindowMode", () => ShowDropdown("WindowMode",
+                new[] { "窗口", "全屏无边框", "独占全屏" }, index =>
+                {
+                    RuntimeDisplaySettings.SetMode(index == 0 ? FullScreenMode.Windowed :
+                        index == 1 ? FullScreenMode.FullScreenWindow : FullScreenMode.ExclusiveFullScreen);
+                    Refresh();
+                }));
+            Bind("Quality", () => ShowDropdown("Quality", QualitySettings.names,
+                index => { RuntimeDisplaySettings.SetQuality(index); Refresh(); }));
+            Bind("DropdownDismiss", CloseDropdowns);
             Bind("Vsync", () => { RuntimeDisplaySettings.SetVsync(QualitySettings.vSyncCount == 0); Refresh(); });
             Bind("Fps60", () => SetFrameRate(60));
             Bind("Fps120", () => SetFrameRate(120));
@@ -70,12 +84,12 @@ namespace BombTavern.Runtime
             Bind("Restore", RestoreDefaults);
             Bind("LeaveSettings", Close);
             Bind("Confirm", () => { PlayerPrefs.Save(); Close(); });
-            Slider("Brightness").onValueChanged.AddListener(v => { SetBrightness(v); RefreshSliderLabels(); });
+            Slider("Brightness").onValueChanged.AddListener(v => { RuntimeDisplaySettings.SetBrightness(v); RefreshSliderLabels(); });
             Slider("UiScale").onValueChanged.AddListener(v => { PlayerPrefs.SetFloat("BombTavern.UiScale", v); RefreshSliderLabels(); });
             Slider("MasterVolume").onValueChanged.AddListener(v => { AudioListener.volume = v; PlayerPrefs.SetFloat("BombTavern.Volume", v); RefreshSliderLabels(); });
             Slider("MusicVolume").onValueChanged.AddListener(v => { if (AudioDirector.Instance != null) AudioDirector.Instance.musicVolume = v; PlayerPrefs.SetFloat("BombTavern.MusicVolume", v); RefreshSliderLabels(); });
             Slider("SfxVolume").onValueChanged.AddListener(v => { if (AudioDirector.Instance != null) AudioDirector.Instance.sfxVolume = v; PlayerPrefs.SetFloat("BombTavern.SfxVolume", v); RefreshSliderLabels(); });
-            Slider("VoiceVolume").onValueChanged.AddListener(v => { if (Voice() != null) Voice().outputVolume = v; PlayerPrefs.SetFloat("BombTavern.VoiceVolume", v); RefreshSliderLabels(); });
+            Slider("VoiceVolume").onValueChanged.AddListener(v => { if (Voice() != null) Voice().SetOutputVolume(v); else PlayerPrefs.SetFloat("BombTavern.VoiceVolume", v); RefreshSliderLabels(); });
             Find("ExitMatch").SetActive(exitMatch != null);
             Find("MatchHint").SetActive(exitMatch != null);
             if (exitMatch != null)
@@ -97,7 +111,8 @@ namespace BombTavern.Runtime
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
             _resolutions.Clear(); _resolutions.AddRange(RuntimeDisplaySettings.ResolutionOptions());
-            TavernSettingsLayout.FitToScreen(_panel);
+            CloseDropdowns();
+            FitPanelToScreen();
             Refresh();
             _animator?.Show();
         }
@@ -106,22 +121,33 @@ namespace BombTavern.Runtime
         {
             if (!_open) return;
             _open = false;
+            CloseDropdowns();
             if (_voice != null && _voice.IsMicrophoneTestRunning) _voice.StopMicrophoneTest();
             PlayerPrefs.Save();
-            _animator?.Hide();
-            gameObject.SetActive(false);
-            _close?.Invoke();
+            void CompleteClose() { if (_open) return; gameObject.SetActive(false); _close?.Invoke(); }
+            if (_animator != null) _animator.Hide(CompleteClose);
+            else CompleteClose();
         }
 
         void Update()
         {
             if (!_open) return;
+            if (_labelScreen != new Vector2Int(Screen.width, Screen.height)) Refresh();
             if (_voice != null && _voice.IsMicrophoneTestRunning) RefreshMic();
-            if (_panel != null) TavernSettingsLayout.FitToScreen(_panel);
+            FitPanelToScreen();
+        }
+
+        void FitPanelToScreen()
+        {
+            if (_panel == null) return;
+            float scale = UiKit.FitScale(_panel.sizeDelta);
+            if (_animator != null) _animator.SetTargetScale(scale);
+            else _panel.localScale = Vector3.one * scale;
         }
 
         void Select(int page)
         {
+            CloseDropdowns();
             _page = page;
             Find("DisplayPage").SetActive(page == 0);
             Find("AudioPage").SetActive(page == 1);
@@ -130,7 +156,9 @@ namespace BombTavern.Runtime
             for (int i = 0; i < tabs.Length; i++)
             {
                 var button = Find(tabs[i]).GetComponent<Button>();
-                button.targetGraphic.color = i == page ? Color.white : new Color(.72f, .66f, .59f);
+                var image = button.targetGraphic as Image;
+                image.sprite = ButtonSprite(i == page);
+                image.color = Color.white;
                 Label(tabs[i]).color = i == page ? new Color(.16f, .08f, .03f) : White;
             }
             Refresh();
@@ -139,16 +167,24 @@ namespace BombTavern.Runtime
         void Refresh()
         {
             if (!_open) return;
-            Label("Resolution").text = $"{Screen.width} × {Screen.height}  ▾";
-            Label("WindowMode").text = RuntimeDisplaySettings.ModeName(Screen.fullScreenMode) + "  ▾";
+            _labelScreen = new Vector2Int(Screen.width, Screen.height);
+            Label("Resolution").text = $"{Screen.width} × {Screen.height}";
+            Label("WindowMode").text = RuntimeDisplaySettings.ModeName(Screen.fullScreenMode);
             var quality = QualitySettings.names;
-            Label("Quality").text = (quality.Length == 0 ? "默认" : quality[Mathf.Clamp(QualitySettings.GetQualityLevel(), 0, quality.Length - 1)]) + "  ▾";
-            Label("Vsync").text = QualitySettings.vSyncCount > 0 ? "● 开启" : "○ 关闭";
+            Label("Quality").text = quality.Length == 0 ? "默认" : quality[Mathf.Clamp(QualitySettings.GetQualityLevel(), 0, quality.Length - 1)];
+            Find("Vsync").GetComponent<Image>().sprite = SheetSprite(
+                QualitySettings.vSyncCount > 0 ? "SettingsToggleOn" : "SettingsToggleOff");
             int fps = PlayerPrefs.GetInt("BombTavern.FrameRate", 120);
+            bool vsync = QualitySettings.vSyncCount > 0;
             foreach (var name in new[] { "Fps60", "Fps120", "FpsUnlimited" })
-                Find(name).GetComponent<Image>().color = (name == "Fps60" && fps == 60) ||
+            {
+                bool selected = (name == "Fps60" && fps == 60) ||
                     (name == "Fps120" && fps == 120) || (name == "FpsUnlimited" && fps < 0)
-                        ? Color.white : new Color(.7f, .65f, .6f);
+                    ;
+                Find(name).GetComponent<Image>().sprite = ButtonSprite(selected);
+                Label(name).color = selected ? new Color(.16f, .08f, .03f) : White;
+            }
+            Label("FpsTitle").text = vsync ? "帧率上限 · 同步优先" : "帧率上限";
             SetSlider("Brightness", PlayerPrefs.GetFloat("BombTavern.Brightness", .5f));
             SetSlider("UiScale", PlayerPrefs.GetFloat("BombTavern.UiScale", 1f));
             SetSlider("MasterVolume", AudioListener.volume);
@@ -174,19 +210,82 @@ namespace BombTavern.Runtime
             Label("MicStatus").text = voice == null ? "当前没有语音设备" : $"{voice.MicrophoneName} · {voice.MicrophoneTestStatus}";
         }
 
+        static Sprite ButtonSprite(bool selected) => Resources.Load<Sprite>("BombTavern/UI/SettingsButton" + (selected ? "Gold" : "Dark"));
+
+        static Sprite SheetSprite(string name)
+        {
+            foreach (var sprite in Resources.LoadAll<Sprite>("BombTavern/UI/SettingsSheetV2"))
+                if (sprite.name == name) return sprite;
+            return null;
+        }
+
+        string[] ResolutionLabels()
+        {
+            var labels = new string[_resolutions.Count];
+            for (int i = 0; i < labels.Length; i++)
+                labels[i] = $"{_resolutions[i].x} × {_resolutions[i].y}";
+            return labels;
+        }
+
+        void ShowDropdown(string name, IList<string> choices, Action<int> select)
+        {
+            if (_expandedDropdown == name) { CloseDropdowns(); return; }
+            CloseDropdowns();
+            if (choices == null || choices.Count == 0) return;
+            var control = Find(name).GetComponent<RectTransform>();
+            var list = control.Find("Options") as RectTransform;
+            var template = list.Find("OptionTemplate").GetComponent<Button>();
+            for (int i = list.childCount - 1; i >= 0; i--)
+            {
+                var child = list.GetChild(i);
+                if (child == template.transform) continue;
+                child.gameObject.SetActive(false);
+                Destroy(child.gameObject);
+            }
+            float height = 44f;
+            list.sizeDelta = new Vector2(0, choices.Count * height + 14f);
+            for (int i = 0; i < choices.Count; i++)
+            {
+                int index = i;
+                var option = Instantiate(template, list, false);
+                option.name = "Option_" + i;
+                var rect = option.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0, 1); rect.anchorMax = Vector2.one;
+                rect.pivot = new Vector2(.5f, 1);
+                rect.anchoredPosition = new Vector2(0, -7f - height * i);
+                rect.sizeDelta = new Vector2(-12f, height);
+                option.GetComponentInChildren<TMP_Text>(true).text = choices[i];
+                option.onClick.AddListener(() => { CloseDropdowns(); select(index); });
+                option.gameObject.SetActive(true);
+            }
+            var dismiss = Find("DropdownDismiss");
+            dismiss.SetActive(true);
+            dismiss.transform.SetAsLastSibling();
+            control.SetAsLastSibling();
+            list.gameObject.SetActive(true);
+            _expandedDropdown = name;
+        }
+
+        void CloseDropdowns()
+        {
+            _expandedDropdown = null;
+            foreach (var name in new[] { "Resolution", "WindowMode", "Quality" })
+            {
+                var list = Find(name).transform.Find("Options");
+                if (list != null) list.gameObject.SetActive(false);
+            }
+            Find("DropdownDismiss").SetActive(false);
+        }
+
         VoiceChatManager Voice() => _voice != null ? _voice : (_voice = FindObjectOfType<VoiceChatManager>());
         void ToggleMicTest() { var voice = Voice(); if (voice == null) return; if (voice.IsMicrophoneTestRunning) voice.StopMicrophoneTest(); else voice.BeginMicrophoneTest(); RefreshMic(); }
-        void CycleMode() { var next = Screen.fullScreenMode == FullScreenMode.Windowed ? FullScreenMode.FullScreenWindow : Screen.fullScreenMode == FullScreenMode.FullScreenWindow ? FullScreenMode.ExclusiveFullScreen : FullScreenMode.Windowed; RuntimeDisplaySettings.SetMode(next); Refresh(); }
-        void CycleQuality() { if (QualitySettings.names.Length == 0) return; RuntimeDisplaySettings.SetQuality((QualitySettings.GetQualityLevel() + 1) % QualitySettings.names.Length); Refresh(); }
-        void CycleResolution()
+        void SetFrameRate(int rate)
         {
-            if (_resolutions.Count == 0) return;
-            int best = 0, distance = int.MaxValue;
-            for (int i = 0; i < _resolutions.Count; i++) { int d = Mathf.Abs(_resolutions[i].x - Screen.width) + Mathf.Abs(_resolutions[i].y - Screen.height); if (d < distance) { distance = d; best = i; } }
-            RuntimeDisplaySettings.SetResolution(_resolutions[(best + 1) % _resolutions.Count]); Refresh();
+            PlayerPrefs.SetInt("BombTavern.FrameRate", rate);
+            if (QualitySettings.vSyncCount > 0) RuntimeDisplaySettings.SetVsync(false);
+            Application.targetFrameRate = rate;
+            Refresh();
         }
-        void SetFrameRate(int rate) { PlayerPrefs.SetInt("BombTavern.FrameRate", rate); Application.targetFrameRate = rate; Refresh(); }
-        static void SetBrightness(float value) { PlayerPrefs.SetFloat("BombTavern.Brightness", value); RenderSettings.ambientIntensity = Mathf.Lerp(.65f, 1.35f, value); }
         void RestoreDefaults()
         {
             RuntimeDisplaySettings.SetMode(FullScreenMode.FullScreenWindow);
@@ -196,9 +295,13 @@ namespace BombTavern.Runtime
             AudioListener.volume = 1f; PlayerPrefs.SetFloat("BombTavern.Volume", 1f);
             if (AudioDirector.Instance != null) { AudioDirector.Instance.musicVolume = .65f; AudioDirector.Instance.sfxVolume = 1f; }
             PlayerPrefs.SetFloat("BombTavern.MusicVolume", .65f); PlayerPrefs.SetFloat("BombTavern.SfxVolume", 1f);
-            if (Voice() != null) { Voice().outputVolume = 1f; Voice().SetVoiceActivation(false); }
-            PlayerPrefs.SetFloat("BombTavern.VoiceVolume", 1f); SetBrightness(.5f);
-            PlayerPrefs.SetFloat("BombTavern.UiScale", 1f); SetFrameRate(120); Refresh(); PlayerPrefs.Save();
+            if (Voice() != null) { Voice().SetOutputVolume(1f); Voice().SetVoiceActivation(false); }
+            else PlayerPrefs.SetFloat("BombTavern.VoiceVolume", 1f);
+            RuntimeDisplaySettings.SetBrightness(.5f);
+            PlayerPrefs.SetFloat("BombTavern.UiScale", 1f);
+            PlayerPrefs.SetInt("BombTavern.FrameRate", 120); Application.targetFrameRate = 120;
+            RuntimeDisplaySettings.SetVsync(true);
+            Refresh(); PlayerPrefs.Save();
         }
         void SetSlider(string name, float value) => Slider(name).SetValueWithoutNotify(value);
         Slider Slider(string name) => Find(name).GetComponent<Slider>();
@@ -210,94 +313,125 @@ namespace BombTavern.Runtime
         public static GameObject CreateTemplate()
         {
             var sprites = new Dictionary<string, Sprite>();
-            foreach (var sprite in Resources.LoadAll<Sprite>("BombTavern/UI/SettingsSheet")) sprites[sprite.name] = sprite;
+            foreach (var sprite in Resources.LoadAll<Sprite>("BombTavern/UI/SettingsSheetV2")) sprites[sprite.name] = sprite;
             Sprite S(string name) => sprites.TryGetValue(name, out var sprite) ? sprite : null;
             var root = NewRect(null, "SettingsPopup", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             root.gameObject.AddComponent<SettingsPopupView>();
             ImageAt(root, "Shade", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, null, new Color(0, 0, 0, .72f), true);
-            var panel = NewRect(root, "Panel", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(1600, 1050));
-            panel.gameObject.AddComponent<Image>().color = new Color(.105f, .052f, .024f, .97f);
+            var panel = NewRect(root, "Panel", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(1600, 1030));
+            var panelImage = panel.gameObject.AddComponent<Image>();
+            panelImage.sprite = S("SettingsPanelFull");
+            panelImage.color = Color.white;
+            panelImage.raycastTarget = true;
             panel.gameObject.AddComponent<CanvasGroup>(); panel.gameObject.AddComponent<UiModalAnimator>();
-            ImageAt(panel, "TopLine", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -92), new Vector2(1540, 4), null, Gold);
-            ImageAt(panel, "BottomLine", new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 90), new Vector2(1540, 4), null, Gold);
-            ImageAt(panel, "TitleArt", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -58), new Vector2(990, 230), S("SettingsTitle"), Color.white);
-            TextAt(panel, "Subtitle", "调整画面、音频与辅助选项", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -182), new Vector2(660, 40), 28, White);
-            ImageAt(panel, "Close", Vector2.one, Vector2.one, new Vector2(-52, -48), new Vector2(72, 72), S("SettingsClose"), Color.white, true);
-            ImageAt(panel, "Side", new Vector2(0, .5f), new Vector2(0, .5f), new Vector2(238, -12), new Vector2(404, 708), null, new Color(.08f, .04f, .02f, .6f));
+            TextAt(panel, "Subtitle", "调整画面、音频与辅助选项", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -278), new Vector2(680, 38), 27, White);
+            ImageAt(panel, "Close", Vector2.one, Vector2.one, new Vector2(-100, -350), new Vector2(68, 68), S("SettingsClose"), Color.white, true);
+            ImageAt(panel, "Side", new Vector2(0, 1), new Vector2(0, 1), new Vector2(310, -616), new Vector2(390, 525), null, new Color(.065f, .033f, .018f, .42f));
             string[] tabNames = { "TabDisplay", "TabAudio", "TabAssist" };
             string[] tabLabels = { "显示", "音频", "辅助功能" };
             string[] tabIcons = { "SettingsMonitor", "SettingsSound", "SettingsGear" };
             for (int i = 0; i < 3; i++)
             {
-                var tab = ImageAt(panel, tabNames[i], new Vector2(0, 1), new Vector2(0, 1), new Vector2(242, -245 - 140 * i), new Vector2(370, 112), S(i == 0 ? "SettingsButtonGold" : "SettingsButtonDark"), Color.white, true);
-                ImageAt(tab, "Icon", new Vector2(0, .5f), new Vector2(0, .5f), new Vector2(60, 0), new Vector2(66, 66), S(tabIcons[i]), Color.white);
-                TextAt(tab, "Caption", tabLabels[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(40, 0), new Vector2(200, 70), 35, White);
+                var tab = ImageAt(panel, tabNames[i], new Vector2(0, 1), new Vector2(0, 1), new Vector2(310, -440 - 115 * i), new Vector2(350, 92), S("SettingsTabBright"), Color.white, true);
+                ImageAt(tab, "Icon", new Vector2(0, .5f), new Vector2(0, .5f), new Vector2(64, 0), new Vector2(58, 58), S(tabIcons[i]), Color.white);
+                TextAt(tab, "Caption", tabLabels[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(34, 0), new Vector2(220, 70), 34, White);
             }
             var display = Page(panel, "DisplayPage");
             Heading(display, "显示设置");
-            RowButton(display, "ResolutionRow", "分辨率", "Resolution", -120, S("SettingsDropdown"));
-            RowButton(display, "ModeRow", "窗口模式", "WindowMode", -220, S("SettingsDropdown"));
-            RowButton(display, "QualityRow", "画面质量", "Quality", -320, S("SettingsDropdown"));
-            RowButton(display, "VsyncRow", "垂直同步", "Vsync", -420, S("SettingsToggleOn"));
-            TextAt(display, "FpsTitle", "帧率上限", new Vector2(0, 1), new Vector2(0, 1), new Vector2(155, -520), new Vector2(250, 65), 30, White);
+            var dismiss = ImageAt(display, "DropdownDismiss", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, null, Color.clear, true);
+            dismiss.gameObject.SetActive(false);
+            RowDropdown(display, "分辨率", "Resolution", -100, S("SettingsTabDark"));
+            RowDropdown(display, "窗口模式", "WindowMode", -168, S("SettingsTabDark"));
+            RowDropdown(display, "画面质量", "Quality", -236, S("SettingsTabDark"));
+            RowBackground(display, "VsyncRow", -304);
+            TextAt(display, "VsyncTitle", "垂直同步", new Vector2(0, 1), new Vector2(0, 1), new Vector2(165, -304), new Vector2(265, 48), 26, White);
+            ImageAt(display, "Vsync", new Vector2(0, 1), new Vector2(0, 1), new Vector2(748, -304), new Vector2(145, 58), S("SettingsToggleOn"), Color.white, true);
+            RowBackground(display, "FpsRow", -372);
+            TextAt(display, "FpsTitle", "帧率上限", new Vector2(0, 1), new Vector2(0, 1), new Vector2(190, -372), new Vector2(340, 54), 25, White);
             string[] fps = { "Fps60", "Fps120", "FpsUnlimited" }; string[] fpsLabels = { "60", "120", "无限" };
             for (int i = 0; i < 3; i++)
             {
-                var button = ImageAt(display, fps[i], new Vector2(0, 1), new Vector2(0, 1), new Vector2(610 + i * 170, -520), new Vector2(158, 68), S("SettingsButtonDark"), Color.white, true);
-                TextAt(button, "Caption", fpsLabels[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(150, 60), 28, White);
+                var button = ImageAt(display, fps[i], new Vector2(0, 1), new Vector2(0, 1), new Vector2(545 + i * 132, -372), new Vector2(120, 53), S("SettingsTabDark"), Color.white, true);
+                TextAt(button, "Caption", fpsLabels[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(110, 48), 25, White);
             }
-            RowSlider(display, "Brightness", "亮度", -620, S("SettingsSliderTrack"), S("SettingsSliderKnob"), 0, 1, .5f);
-            RowSlider(display, "UiScale", "UI 缩放", -720, S("SettingsSliderTrack"), S("SettingsSliderKnob"), .75f, 1.25f, 1f);
+            RowSlider(display, "Brightness", "亮度", -440, S("SettingsSliderEmpty"), S("SettingsSliderFilled"), S("SettingsSliderKnob"), 0, 1, .5f);
+            RowSlider(display, "UiScale", "UI 缩放", -508, S("SettingsSliderEmpty"), S("SettingsSliderFilled"), S("SettingsSliderKnob"), .75f, 1.25f, 1f);
             var audio = Page(panel, "AudioPage"); Heading(audio, "音频设置");
-            RowSlider(audio, "MasterVolume", "主音量", -135, S("SettingsSliderTrack"), S("SettingsSliderKnob"), 0, 1, 1);
-            RowSlider(audio, "MusicVolume", "音乐音量", -245, S("SettingsSliderTrack"), S("SettingsSliderKnob"), 0, 1, .65f);
-            RowSlider(audio, "SfxVolume", "音效音量", -355, S("SettingsSliderTrack"), S("SettingsSliderKnob"), 0, 1, 1);
-            RowSlider(audio, "VoiceVolume", "语音音量", -465, S("SettingsSliderTrack"), S("SettingsSliderKnob"), 0, 1, 1);
-            WideButton(audio, "VoiceMode", "按住 V 发言", -585, S("SettingsButtonDark"));
-            WideButton(audio, "MicTest", "录制 3 秒并回放", -690, S("SettingsButtonDark"));
-            TextAt(audio, "MicStatus", "", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -765), new Vector2(980, 48), 23, White);
+            RowSlider(audio, "MasterVolume", "主音量", -112, S("SettingsSliderEmpty"), S("SettingsSliderFilled"), S("SettingsSliderKnob"), 0, 1, 1);
+            RowSlider(audio, "MusicVolume", "音乐音量", -202, S("SettingsSliderEmpty"), S("SettingsSliderFilled"), S("SettingsSliderKnob"), 0, 1, .65f);
+            RowSlider(audio, "SfxVolume", "音效音量", -292, S("SettingsSliderEmpty"), S("SettingsSliderFilled"), S("SettingsSliderKnob"), 0, 1, 1);
+            RowSlider(audio, "VoiceVolume", "语音音量", -382, S("SettingsSliderEmpty"), S("SettingsSliderFilled"), S("SettingsSliderKnob"), 0, 1, 1);
+            WideButton(audio, "VoiceMode", "按住 V 发言", -462, S("SettingsTabDark"));
+            WideButton(audio, "MicTest", "录制 3 秒并回放", -530, S("SettingsTabDark"));
+            TextAt(audio, "MicStatus", "", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -577), new Vector2(840, 38), 20, White);
             var assist = Page(panel, "AssistPage"); Heading(assist, "辅助功能");
-            WideButton(assist, "Rules", "查看完整规则", -145, S("SettingsButtonDark"));
-            TextAt(assist, "VoiceHint", "按 V 发言；联机对局中打开设置不会暂停游戏。", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -260), new Vector2(1000, 90), 28, White);
-            WideButton(assist, "ExitMatch", "退出对局，返回大厅", -425, S("SettingsButtonDark"));
-            TextAt(assist, "MatchHint", "", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -500), new Vector2(1000, 70), 25, White);
-            WideButton(assist, "ExitGame", "退出游戏", -650, S("SettingsButtonDark"));
-            var footer = NewRect(panel, "Footer", new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 43), new Vector2(1500, 90));
+            WideButton(assist, "Rules", "查看完整规则", -122, S("SettingsTabDark"));
+            TextAt(assist, "VoiceHint", "按 V 发言；联机对局中打开设置不会暂停游戏。", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -214), new Vector2(840, 72), 25, White);
+            WideButton(assist, "ExitMatch", "退出对局，返回大厅", -340, S("SettingsTabDark"));
+            TextAt(assist, "MatchHint", "", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -397), new Vector2(840, 54), 24, White);
+            WideButton(assist, "ExitGame", "退出游戏", -485, S("SettingsTabDark"));
+            var footer = NewRect(panel, "Footer", new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 69), new Vector2(1430, 82));
             string[] footNames = { "Restore", "LeaveSettings", "Confirm" }; string[] footLabels = { "恢复默认", "退出设置", "确定" };
             for (int i = 0; i < 3; i++)
             {
-                var button = ImageAt(footer, footNames[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(-470 + 470 * i, 0), new Vector2(420, 82), S(i == 2 ? "SettingsButtonGold" : "SettingsButtonDark"), Color.white, true);
-                TextAt(button, "Caption", footLabels[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(370, 70), 34, i == 2 ? new Color(.17f, .08f, .03f) : White);
+                var button = ImageAt(footer, footNames[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(-450 + 450 * i, 0), new Vector2(385, 76), S(i == 2 ? "SettingsTabBright" : "SettingsTabDark"), Color.white, true);
+                TextAt(button, "Caption", footLabels[i], new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(340, 65), 30, i == 2 ? new Color(.17f, .08f, .03f) : White);
             }
             display.gameObject.SetActive(true); audio.gameObject.SetActive(false); assist.gameObject.SetActive(false);
             return root.gameObject;
         }
 
-        static RectTransform Page(RectTransform panel, string name) => NewRect(panel, name, new Vector2(0, 1), new Vector2(0, 1), new Vector2(1080, -590), new Vector2(1010, 790));
-        static void Heading(RectTransform parent, string title) { TextAt(parent, "Heading", title, new Vector2(0, 1), new Vector2(0, 1), new Vector2(250, -32), new Vector2(480, 62), 38, Gold); ImageAt(parent, "HeadingLine", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -78), new Vector2(970, 2), null, Gold); }
-        static void RowButton(RectTransform parent, string rowName, string label, string control, float y, Sprite sprite)
+        static RectTransform Page(RectTransform panel, string name) => NewRect(panel, name,
+            new Vector2(0, 1), new Vector2(0, 1), new Vector2(1025, -647), new Vector2(900, 550));
+
+        static void Heading(RectTransform parent, string title)
         {
-            TextAt(parent, rowName, label, new Vector2(0, 1), new Vector2(0, 1), new Vector2(155, y), new Vector2(260, 70), 30, White);
-            var button = ImageAt(parent, control, new Vector2(0, 1), new Vector2(0, 1), new Vector2(720, y), new Vector2(475, 72), sprite, Color.white, true);
-            TextAt(button, "Value", "", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(420, 62), 27, White);
+            TextAt(parent, "Heading", title, new Vector2(0, 1), new Vector2(0, 1), new Vector2(235, -27), new Vector2(440, 56), 32, Gold);
+            ImageAt(parent, "HeadingLine", new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -64), new Vector2(855, 2), null, new Color(.75f, .5f, .16f, .7f));
         }
-        static void RowSlider(RectTransform parent, string name, string label, float y, Sprite track, Sprite knob, float min, float max, float value)
+
+        static void RowBackground(RectTransform parent, string name, float y)
         {
-            TextAt(parent, name + "Title", label, new Vector2(0, 1), new Vector2(0, 1), new Vector2(155, y), new Vector2(260, 70), 30, White);
-            var slider = NewRect(parent, name, new Vector2(0, 1), new Vector2(0, 1), new Vector2(682, y), new Vector2(425, 60));
-            var bg = ImageAt(slider, "Background", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(420, 50), track, Color.white);
+            ImageAt(parent, name, new Vector2(0, 1), new Vector2(0, 1), new Vector2(450, y),
+                new Vector2(870, 62), null, new Color(.06f, .03f, .012f, .55f));
+        }
+
+        static void RowDropdown(RectTransform parent, string title, string name, float y, Sprite sprite)
+        {
+            RowBackground(parent, name + "Row", y);
+            TextAt(parent, name + "Title", title, new Vector2(0, 1), new Vector2(0, 1), new Vector2(175, y), new Vector2(295, 52), 26, White);
+            var button = ImageAt(parent, name, new Vector2(0, 1), new Vector2(0, 1), new Vector2(680, y), new Vector2(355, 55), sprite, Color.white, true);
+            TextAt(button, "Value", "", new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(-10, 0), new Vector2(285, 50), 24, White);
+            var list = ImageAt(button, "Options", new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, -8), Vector2.zero, sprite, Color.white);
+            list.pivot = new Vector2(.5f, 1);
+            var option = ImageAt(list, "OptionTemplate", new Vector2(0, 1), Vector2.one, new Vector2(0, -7), new Vector2(-12, 44), sprite, Color.white, true);
+            option.pivot = new Vector2(.5f, 1);
+            TextAt(option, "OptionLabel", "选项", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(320, 40), 22, White);
+            option.gameObject.SetActive(false);
+            list.gameObject.SetActive(false);
+        }
+
+        static void RowSlider(RectTransform parent, string name, string label, float y,
+            Sprite track, Sprite filled, Sprite knob, float min, float max, float value)
+        {
+            RowBackground(parent, name + "Row", y);
+            TextAt(parent, name + "Title", label, new Vector2(0, 1), new Vector2(0, 1), new Vector2(175, y), new Vector2(295, 52), 26, White);
+            var slider = NewRect(parent, name, new Vector2(0, 1), new Vector2(0, 1), new Vector2(670, y), new Vector2(345, 45));
+            var background = ImageAt(slider, "Background", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(340, 30), track, Color.white);
+            background.GetComponent<Image>().raycastTarget = true;
             var fill = NewRect(slider, "Fill Area", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            var fillImage = ImageAt(fill, "Fill", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, null, Gold);
+            var fillImage = ImageAt(fill, "Fill", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(0, -15), filled, Color.white);
             var handle = NewRect(slider, "Handle Slide Area", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            var handleImage = ImageAt(handle, "Handle", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(60, 60), knob, Color.white);
+            var handleImage = ImageAt(handle, "Handle", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(53, 53), knob, Color.white);
+            handleImage.GetComponent<Image>().raycastTarget = true;
             var component = slider.gameObject.AddComponent<Slider>(); component.minValue = min; component.maxValue = max; component.value = value;
             component.fillRect = fillImage; component.handleRect = handleImage; component.targetGraphic = handleImage.GetComponent<Image>();
-            TextAt(parent, name + "Value", "", new Vector2(0, 1), new Vector2(0, 1), new Vector2(950, y), new Vector2(140, 65), 28, White);
+            TextAt(parent, name + "Value", "", new Vector2(0, 1), new Vector2(0, 1), new Vector2(845, y), new Vector2(86, 50), 24, White);
         }
         static void WideButton(RectTransform parent, string name, string text, float y, Sprite sprite)
         {
-            var button = ImageAt(parent, name, new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, y), new Vector2(900, 82), sprite, Color.white, true);
-            TextAt(button, "Caption", text, new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(830, 68), 28, White);
+            var button = ImageAt(parent, name, new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, y), new Vector2(780, 62), sprite, Color.white, true);
+            TextAt(button, "Caption", text, new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(720, 54), 26, White);
         }
         static RectTransform NewRect(Transform parent, string name, Vector2 min, Vector2 max, Vector2 position, Vector2 size)
         {

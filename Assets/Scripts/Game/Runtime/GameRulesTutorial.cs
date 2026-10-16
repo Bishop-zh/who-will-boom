@@ -256,9 +256,9 @@ namespace BombTavern.Runtime
             rect.anchoredPosition = new Vector2(x, -top);
             rect.sizeDelta = new Vector2(width, height);
         }
-        public void ShowFirstTime()
+        public void ShowFirstTime(bool allowBackground = false)
         {
-            if (!Application.isBatchMode && PlayerPrefs.GetInt(SeenKey, 0) == 0) Show();
+            if ((!Application.isBatchMode || allowBackground) && PlayerPrefs.GetInt(SeenKey, 0) == 0) Show();
         }
 
         public void Show()
@@ -266,6 +266,8 @@ namespace BombTavern.Runtime
             if (IsOpen || _panel == null) return;
             IsOpen = true;
             FitToScreen();
+            // 预制体根必须位于设置弹窗之后，仅调整根内子节点无法覆盖设置遮罩。
+            _panel.parent.SetAsLastSibling();
             _blocker.gameObject.SetActive(true);
             _blocker.SetAsLastSibling();
             _panel.SetAsLastSibling();
@@ -279,8 +281,7 @@ namespace BombTavern.Runtime
             IsOpen = false;
             PlayerPrefs.SetInt(SeenKey, 1);
             PlayerPrefs.Save();
-            _blocker.gameObject.SetActive(false);
-            _animator.Hide();
+            _animator.Hide(() => { if (!IsOpen) _blocker.gameObject.SetActive(false); });
         }
 
         void Update()

@@ -21,6 +21,7 @@ namespace BombTavern.Runtime
         const string DefaultsVersionKey = "BombTavern.DisplayDefaultsV3";
 
         static bool _applied;
+        static Image _brightnessOverlay;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void AutoApply() => ApplySavedOnce();
@@ -61,8 +62,7 @@ namespace BombTavern.Runtime
             QualitySettings.SetQualityLevel(Mathf.Clamp(quality, 0, QualitySettings.names.Length - 1), true);
             QualitySettings.vSyncCount = PlayerPrefs.GetInt(VsyncKey, 1) > 0 ? 1 : 0;
             Application.targetFrameRate = PlayerPrefs.GetInt("BombTavern.FrameRate", 120);
-            RenderSettings.ambientIntensity = Mathf.Lerp(.65f, 1.35f,
-                Mathf.Clamp01(PlayerPrefs.GetFloat("BombTavern.Brightness", .5f)));
+            SetBrightness(PlayerPrefs.GetFloat("BombTavern.Brightness", .5f));
 
             var native = Screen.currentResolution;
             int width = PlayerPrefs.GetInt(WidthKey, native.width > 0 ? native.width : 1920);
@@ -135,6 +135,31 @@ namespace BombTavern.Runtime
             QualitySettings.vSyncCount = enabled ? 1 : 0;
             PlayerPrefs.SetInt(VsyncKey, QualitySettings.vSyncCount);
             PlayerPrefs.Save();
+        }
+
+        public static void SetBrightness(float value)
+        {
+            value = Mathf.Clamp01(value);
+            PlayerPrefs.SetFloat("BombTavern.Brightness", value);
+            RenderSettings.ambientIntensity = Mathf.Lerp(.65f, 1.35f, value);
+            if (_brightnessOverlay == null)
+            {
+                var root = new GameObject("BombTavern_BrightnessOverlay", typeof(RectTransform), typeof(Canvas));
+                Object.DontDestroyOnLoad(root);
+                var canvas = root.GetComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 50; // 世界画面之上、HUD/主页画布之下。
+                var imageGo = new GameObject("Brightness", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                imageGo.transform.SetParent(root.transform, false);
+                var rect = imageGo.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+                _brightnessOverlay = imageGo.GetComponent<Image>();
+                _brightnessOverlay.raycastTarget = false;
+            }
+            _brightnessOverlay.color = value < .5f
+                ? new Color(0f, 0f, 0f, (.5f - value) * .72f)
+                : new Color(1f, 1f, 1f, (value - .5f) * .36f);
         }
 
         public static List<Vector2Int> ResolutionOptions()

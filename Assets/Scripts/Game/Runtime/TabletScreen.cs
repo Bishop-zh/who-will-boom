@@ -187,6 +187,16 @@ namespace BombTavern.Runtime
         MaterialPropertyBlock _mpb;
         bool _built;
 
+        // Runtime-only settings: do not alter the serialized public field layout of TabletScreen.
+        private bool showBlastMarks = true;
+        private float blastMarkScale = 0.88f;
+        private float blastMarkFloatHeight = 0.026f;
+        private float blastMarkPulseSpeed = 3.5f;
+        private Transform _blastRoot;
+        private readonly Dictionary<int, Transform> _blastMarks = new Dictionary<int, Transform>();
+        private readonly Dictionary<int, Renderer[]> _blastMarkRenderers = new Dictionary<int, Renderer[]>();
+        private readonly Dictionary<int, int> _blastMarkSeat = new Dictionary<int, int>();
+
         // ---- 每座位一套印记：方框 + 卡通徽章（用该玩家的标识色与徽记形状）
         readonly List<Transform> _seatMarkers = new List<Transform>();
         readonly List<Renderer[]> _seatMarkerRenderers = new List<Renderer[]>();
@@ -384,6 +394,9 @@ namespace BombTavern.Runtime
         {
             _seatMarkers.Clear();
             _seatMarkerRenderers.Clear();
+            _blastMarks.Clear();
+            _blastMarkRenderers.Clear();
+            _blastMarkSeat.Clear();
 
             int seatCount = Director != null && Director.Session != null
                 ? Director.Session.Players.Length
@@ -528,6 +541,7 @@ namespace BombTavern.Runtime
             DestroyOwned(ref _slab);
             DestroyOwned(ref _tileRoot);
             DestroyOwned(ref _seatMarkerRoot);
+            DestroyOwned(ref _blastRoot);
 
             _built = false;
         }
@@ -594,7 +608,7 @@ namespace BombTavern.Runtime
                 // 既不落在绿→红的概率色带上，也不和「安全翻开」混。
                 color = new Color(0.055f, 0.042f, 0.040f);
                 emission = 1f;
-                emissionOverride = new Color(0.62f, 0.10f, 0.05f) * emissiveIntensity;
+                emissionOverride = new Color(0.85f, 0.16f, 0.08f) * 2.2f;
             }
             else if (cell.revealed)
             {
@@ -643,6 +657,77 @@ namespace BombTavern.Runtime
             UpdateLocalSelectionMarker();
             UpdateSeatMarkers();
             UpdatePrivateIntel();
+            UpdateBlastMarks();
+        }
+
+        void UpdateBlastMarks()
+        {
+            if (!showBlastMarks)
+            {
+                if (_blastRoot != null) _blastRoot.gameObject.SetActive(false);
+                return;
+            }
+            if (_blastRoot != null && !_blastRoot.gameObject.activeSelf) _blastRoot.gameObject.SetActive(true);
+
+            var cam = Camera.main;
+            float now = Time.time;
+            foreach (var tile in _tiles)
+            {
+                if (tile == null) continue;
+                int key = Board.Index(tile.x, tile.y);
+                var riskCell = Board.Get(tile.x, tile.y);
+                if (!riskCell.blasted)
+                {
+                    if (_blastMarks.TryGetValue(key, out var hidden) && hidden != null) hidden.gameObject.SetActive(false);
+                    continue;
+                }
+                if (_blastRoot == null)
+                {
+                    _blastRoot = new GameObject("BlastMarks").transform;
+                    _blastRoot.SetParent(transform, false);
+                }
+                if (!_blastMarks.TryGetValue(key, out var mark) || mark == null)
+                {
+                    mark = new GameObject("BlastMark_" + key).transform;
+                    mark.SetParent(_blastRoot, false);
+                    float size = Mathf.Max(.008f, cellSize * blastMarkScale);
+                    var parts = new List<Renderer>(4);
+                    AddBar(mark, "Slash", Vector3.zero, new Vector3(size, size * .18f, .002f), parts);
+                    mark.GetChild(0).localRotation = Quaternion.Euler(0, 0, 45);
+                    AddBar(mark, "Backslash", Vector3.zero, new Vector3(size, size * .18f, .002f), parts);
+                    mark.GetChild(1).localRotation = Quaternion.Euler(0, 0, -45);
+                    // Preserve seat identity when the bright outer pulse clips blue/green to cyan.
+                    // Negative Z is toward the camera because billboard.forward points away from it.
+                    AddBar(mark, "SlashColorCore", new Vector3(0, 0, -.002f), new Vector3(size * .9f, size * .095f, .001f), parts);
+                    mark.GetChild(2).localRotation = Quaternion.Euler(0, 0, 45);
+                    AddBar(mark, "BackslashColorCore", new Vector3(0, 0, -.002f), new Vector3(size * .9f, size * .095f, .001f), parts);
+                    mark.GetChild(3).localRotation = Quaternion.Euler(0, 0, -45);
+                    _blastMarks[key] = mark;
+                    _blastMarkRenderers[key] = parts.ToArray();
+                }
+                mark.gameObject.SetActive(true);
+                Vector3 cellWorld = tile.transform.position;
+                Vector3 outward = cam != null ? cam.transform.position - cellWorld : transform.up;
+                if (outward.sqrMagnitude < 1e-6f) outward = transform.up;
+                mark.position = cellWorld + outward.normalized * blastMarkFloatHeight;
+                mark.rotation = cam != null
+                    ? Quaternion.LookRotation(mark.position - cam.transform.position, cam.transform.up)
+                    : Quaternion.LookRotation(-outward.normalized, transform.forward);
+
+                Color seatColor = Director != null ? Director.ColorOfSeat(riskCell.blastedSeat) : Color.white;
+                float glow = 2.4f + 1.8f * Mathf.Abs(Mathf.Sin(now * blastMarkPulseSpeed + key * .7f));
+                _blastMarkSeat[key] = riskCell.blastedSeat;
+                var renderers = _blastMarkRenderers[key];
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    var renderer = renderers[i];
+                    if (renderer == null) continue;
+                    renderer.GetPropertyBlock(_mpb);
+                    _mpb.SetColor("_Color", seatColor);
+                    _mpb.SetColor("_EmissionColor", seatColor * (i < 2 ? glow : .6f));
+                    renderer.SetPropertyBlock(_mpb);
+                }
+            }
         }
 
         void UpdateLocalSelectionMarker()

@@ -13,6 +13,17 @@ namespace BombTavern.Runtime
     /// </summary>
     public static class SimpleVfx
     {
+        static Material _particleMaterial;
+        static void BindParticleMaterial(ParticleSystem particles)
+        {
+            if (_particleMaterial == null)
+            {
+                var shader = Resources.Load<Shader>("BombTavern/Shaders/RuntimeParticle");
+                if (shader == null) { Debug.LogError("[特效] RuntimeParticle shader asset missing"); return; }
+                _particleMaterial = new Material(shader) { name = "BombTavern_RuntimeParticle", hideFlags = HideFlags.DontSave };
+            }
+            particles.GetComponent<ParticleSystemRenderer>().sharedMaterial = _particleMaterial;
+        }
         /// <summary>一次性火花爆发。用于使用道具、踩雷这类需要瞬时反馈的场合。</summary>
         public static void Burst(Vector3 worldPosition, Color color, int count = 38,
             float size = 0.05f, float speed = 2.2f, float lifetime = 0.55f)
@@ -21,6 +32,7 @@ namespace BombTavern.Runtime
             go.transform.position = worldPosition;
 
             var ps = go.AddComponent<ParticleSystem>();
+            BindParticleMaterial(ps);
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
             var main = ps.main;
@@ -89,6 +101,7 @@ namespace BombTavern.Runtime
                 go.transform.rotation = Quaternion.LookRotation(normal.normalized, Vector3.up);
 
             var ps = go.AddComponent<ParticleSystem>();
+            BindParticleMaterial(ps);
 
             var main = ps.main;
             main.startColor = new ParticleSystem.MinMaxGradient(

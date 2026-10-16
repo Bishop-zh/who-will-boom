@@ -122,7 +122,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &411069760
+--- !u!1 &330186018
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -130,56 +130,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 411069762}
-  - component: {fileID: 411069761}
-  m_Layer: 0
-  m_Name: MainMenuUI
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &411069761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 411069760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb397397f9d7d8544b8cec2569709c9f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playSceneName: BombTavern_Play
-  panelColor: {r: 0.06, g: 0.06, b: 0.09, a: 0.9}
-  accentColor: {r: 0.98, g: 0.76, b: 0.3, a: 1}
-  selectColor: {r: 0.98, g: 0.76, b: 0.3, a: 1}
---- !u!4 &411069762
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 411069760}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1376731821
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1376731823}
-  - component: {fileID: 1376731822}
+  - component: {fileID: 330186020}
+  - component: {fileID: 330186019}
   m_Layer: 0
   m_Name: MenuLight
   m_TagString: Untagged
@@ -187,13 +139,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!108 &1376731822
+--- !u!108 &330186019
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1376731821}
+  m_GameObject: {fileID: 330186018}
   m_Enabled: 1
   serializedVersion: 10
   m_Type: 2
@@ -249,13 +201,13 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
---- !u!4 &1376731823
+--- !u!4 &330186020
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1376731821}
+  m_GameObject: {fileID: 330186018}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 2.6, z: 1.4}
@@ -264,7 +216,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1796375174
+--- !u!1 &524108317
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -272,9 +224,65 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1796375177}
-  - component: {fileID: 1796375176}
-  - component: {fileID: 1796375175}
+  - component: {fileID: 524108319}
+  - component: {fileID: 524108318}
+  m_Layer: 0
+  m_Name: SessionContext
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &524108318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 524108317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4cb3267ca384464e9e815179c5ed83e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerName: "\u7EA2\u96F7"
+  skinId: black_sphere
+  mode: 0
+  connectAddress: 
+  port: 0
+  boardColumns: 12
+  boardRows: 10
+  bombCount: 19
+  driftPercent: 5
+  driftGrowthPercentPerRound: 3
+  turnTimeLimitSeconds: 30
+  skinCatalog: {fileID: 11400000, guid: 8051a91c04d4d2045a9543c91cfb4a6e, type: 2}
+--- !u!4 &524108319
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 524108317}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &947526373
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 947526376}
+  - component: {fileID: 947526375}
+  - component: {fileID: 947526374}
   m_Layer: 0
   m_Name: MenuCamera
   m_TagString: MainCamera
@@ -282,21 +290,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1796375175
+--- !u!81 &947526374
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1796375174}
+  m_GameObject: {fileID: 947526373}
   m_Enabled: 1
---- !u!20 &1796375176
+--- !u!20 &947526375
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1796375174}
+  m_GameObject: {fileID: 947526373}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
@@ -341,13 +349,13 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &1796375177
+--- !u!4 &947526376
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1796375174}
+  m_GameObject: {fileID: 947526373}
   serializedVersion: 2
   m_LocalRotation: {x: -0.0000000022876774, y: 0.9986295, z: -0.05233596, w: -0.000000043651482}
   m_LocalPosition: {x: 0, y: 1.4, z: 2.2}
@@ -356,7 +364,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1948084198
+--- !u!1 &1011022215
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -364,40 +372,38 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1948084200}
-  - component: {fileID: 1948084199}
+  - component: {fileID: 1011022217}
+  - component: {fileID: 1011022216}
   m_Layer: 0
-  m_Name: SessionContext
+  m_Name: MainMenuUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1948084199
+--- !u!114 &1011022216
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1948084198}
+  m_GameObject: {fileID: 1011022215}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4cb3267ca384464e9e815179c5ed83e, type: 3}
+  m_Script: {fileID: 11500000, guid: cb397397f9d7d8544b8cec2569709c9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerName: "\u7EA2\u96F7"
-  skinId: black_sphere
-  mode: 0
-  connectAddress: 127.0.0.1
-  port: 0
-  skinCatalog: {fileID: 11400000, guid: 8051a91c04d4d2045a9543c91cfb4a6e, type: 2}
---- !u!4 &1948084200
+  playSceneName: BombTavern_Play
+  panelColor: {r: 0.06, g: 0.06, b: 0.09, a: 0.9}
+  accentColor: {r: 0.98, g: 0.76, b: 0.3, a: 1}
+  selectColor: {r: 0.98, g: 0.76, b: 0.3, a: 1}
+--- !u!4 &1011022217
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1948084198}
+  m_GameObject: {fileID: 1011022215}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -410,7 +416,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1796375177}
-  - {fileID: 1376731823}
-  - {fileID: 1948084200}
-  - {fileID: 411069762}
+  - {fileID: 947526376}
+  - {fileID: 330186020}
+  - {fileID: 524108319}
+  - {fileID: 1011022217}

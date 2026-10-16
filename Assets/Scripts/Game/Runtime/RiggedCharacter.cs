@@ -5,7 +5,7 @@ namespace BombTavern.Runtime
     /// <summary>
     /// 带骨骼的炸弹角色外观。
     ///
-    /// 它把 Animator 包一层，对外只暴露四个状态（Idle / Aim / UseItem / Hit），
+    /// 它把 Animator 包一层，对外暴露 Idle / Aim / Tap / UseItem / Hit，
     /// 上层（BombActionAnimator、ItemPropPresenter）不需要知道动画是怎么组织的。
     ///
     /// 状态切换全部由代码驱动，不在 AnimatorController 里连过渡线 ——
@@ -15,7 +15,7 @@ namespace BombTavern.Runtime
     [DisallowMultipleComponent]
     public class RiggedBombView : MonoBehaviour
     {
-        public enum State { Idle, Aim, UseItem, Hit }
+        public enum State { Idle, Aim, Tap, UseItem, Hit }
 
         // 使用完整状态路径并显式指定第 0 层。只传短名并让 layer=-1 自动搜索时，
         // 控制器刚完成热重载的首帧可能报 State could not be found / Invalid Layer Index。
@@ -45,6 +45,16 @@ namespace BombTavern.Runtime
 
         [Tooltip("对准动作在没有新指令后自动回到待机的时间。")]
         public float aimSeconds = 1.2f;
+
+        [Header("翻格动作")]
+        [Tooltip("点击格子时手臂前伸再收回的时间。")]
+        public float tapSeconds = 0.34f;
+
+        [Tooltip("点击格子时前臂向下点按的最大角度。")]
+        public float tapForearmDegrees = 28f;
+
+        [Tooltip("点击格子时手腕跟随的最大角度。")]
+        public float tapHandDegrees = 12f;
 
         [Header("待机加成")]
         [Tooltip("待机时在模型根节点上叠加的呼吸起伏（米）。" +
@@ -83,6 +93,7 @@ namespace BombTavern.Runtime
         Vector3 _baseLocalPos;
         Quaternion _baseLocalRot = Quaternion.identity;
         float _phase;
+        float _tapAt;
 
         // 注视偏转：目标值由 BombActionAnimator 每帧写入，这里做平滑跟随。
         // 直接赋值会「啪」地跳过去，看着很僵；插值之后才有转头的感觉。
@@ -172,16 +183,22 @@ namespace BombTavern.Runtime
         {
             // Animator 在 Update 阶段写骨骼；这里晚一拍叠加偏转，既保留 Aim/UseItem 剪辑，
             // 又让右手连续跟随当前注视格，而不是只能播固定方向的动作。
-            if (_down || !_hasAim) return;
+            if (_down || (!_hasAim && _current != State.Tap)) return;
+
+            // Aim 剪辑负责抬手；短促的骨骼叠加负责真正的点按。
+            // 即使翻格后立刻换人、悬停被清除，动作仍能播完。
+            float tap = _current == State.Tap
+                ? Mathf.Sin(Mathf.PI * Mathf.Clamp01((Time.time - _tapAt) / Mathf.Max(0.05f, tapSeconds)))
+                : 0f;
 
             float yaw = aimYawDegrees > 0.001f ? _aimYaw / aimYawDegrees : 0f;
             float pitch = aimPitchDegrees > 0.001f ? _aimPitch / aimPitchDegrees : 0f;
             if (rightUpperArm != null)
                 rightUpperArm.localRotation *= Quaternion.Euler(pitch * 10f, yaw * 16f, -yaw * 7f);
             if (rightForearm != null)
-                rightForearm.localRotation *= Quaternion.Euler(pitch * 7f, yaw * 11f, 0f);
+                rightForearm.localRotation *= Quaternion.Euler(pitch * 7f + tap * tapForearmDegrees, yaw * 11f, 0f);
             if (rightHand != null)
-                rightHand.localRotation *= Quaternion.Euler(pitch * 4f, yaw * 6f, -yaw * 3f);
+                rightHand.localRotation *= Quaternion.Euler(pitch * 4f + tap * tapHandDegrees, yaw * 6f, -yaw * 3f);
         }
 
         /// <summary>
@@ -241,6 +258,7 @@ namespace BombTavern.Runtime
         {
             State.UseItem => useItemSeconds,
             State.Hit => hitSeconds,
+            State.Tap => tapSeconds,
             State.Aim => aimSeconds,
             _ => 0f,
         };
@@ -250,16 +268,17 @@ namespace BombTavern.Runtime
             if (animator == null || animator.layerCount <= 0) return;
 
             _current = state;
-            // 过渡给足一点：0.10 秒的硬切在近景看就是「啪」地跳一下，
-            // 0.22 秒才像真的在动身体。
+            if (state == State.Tap) _tapAt = Time.time;
+            // 翻格本身很短，用更快的过渡让点按可见；其他动作保留柔和衔接。
             int hash = HashOf(state);
             if (animator.HasState(0, hash))
-                animator.CrossFadeInFixedTime(hash, 0.22f, 0);
+                animator.CrossFadeInFixedTime(hash, state == State.Tap ? 0.08f : 0.22f, 0);
         }
 
         static int HashOf(State state) => state switch
         {
             State.Aim => HashAim,
+            State.Tap => HashAim,
             State.UseItem => HashUseItem,
             State.Hit => HashHit,
             _ => HashIdle,

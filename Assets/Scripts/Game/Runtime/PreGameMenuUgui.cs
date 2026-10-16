@@ -18,8 +18,10 @@ namespace BombTavern.Runtime
         Canvas _canvas;
         RectTransform _safe;
         RectTransform _home;
+        RectTransform _setupRoot;
         RectTransform _statsPanel;
         RectTransform _statsBlocker;
+        StatisticsPopupView _statisticsView;
         bool _setupVisible;
         RectTransform _left;
         RectTransform _right;
@@ -57,10 +59,13 @@ namespace BombTavern.Runtime
         bool _settingsOpen;
         readonly List<Button> _modeButtons = new List<Button>();
         readonly List<Button> _skinButtons = new List<Button>();
+        Sprite _skinCardNormal;
+        Sprite _skinCardSelected;
         int _lastMode = -1;
         string _lastSkin;
         Vector2Int _lastScreen;
         Rect _lastSafeArea;
+        Vector2 _lastSafeSize;
 
         public void Configure(PreGameMenu owner)
         {
@@ -79,9 +84,12 @@ namespace BombTavern.Runtime
             _safe = UiKit.CreateSafeAreaRoot(_canvas);
 
             BuildHome();
-            BuildRoster();
-            BuildSessionPanel();
-            BuildLoopFooter();
+            if (!BuildSetupPrefab())
+            {
+                BuildRoster();
+                BuildSessionPanel();
+                BuildLoopFooter();
+            }
             BuildSettingsPanel();
             BuildGameSetupPanel();
             BuildStatsPanel();
@@ -211,14 +219,108 @@ namespace BombTavern.Runtime
         {
             _setupVisible = show;
             if (_home != null) _home.gameObject.SetActive(!show);
+            if (_setupRoot != null) _setupRoot.gameObject.SetActive(show);
             if (_left != null) _left.gameObject.SetActive(show);
             if (_right != null) _right.gameObject.SetActive(show);
             if (_footer != null) _footer.gameObject.SetActive(show);
             if (_setupBack != null) _setupBack.gameObject.SetActive(show);
         }
 
+        bool BuildSetupPrefab()
+        {
+            var prefab = Resources.Load<GameObject>("BombTavern/Prefabs/UI/StartGameSetup");
+            if (prefab == null) return false;
+            _setupRoot = Instantiate(prefab, _safe, false).GetComponent<RectTransform>();
+            if (_setupRoot == null) return false;
+            _setupRoot.anchorMin = Vector2.zero;
+            _setupRoot.anchorMax = Vector2.one;
+            _setupRoot.offsetMin = Vector2.zero;
+            _setupRoot.offsetMax = Vector2.zero;
+            _left = _setupRoot.Find("RosterPanel") as RectTransform;
+            _right = _setupRoot.Find("SessionPanel") as RectTransform;
+            _footer = _setupRoot.Find("CoreLoop") as RectTransform;
+            _setupBack = _setupRoot.Find("BackHome") as RectTransform;
+            if (_left == null || _right == null || _footer == null || _setupBack == null)
+                throw new MissingReferenceException("StartGameSetup 预制体缺少主面板节点");
+            _setupBack.GetComponent<Button>().onClick.AddListener(() => { Click(); ShowSetup(false); });
+
+            var catalog = _owner.SkinCatalog;
+            if (catalog != null && catalog.skins != null && catalog.skins.Count > 0)
+            {
+                bool valid = false;
+                foreach (var skin in catalog.skins)
+                    if (skin != null && skin.skinId == _owner.SelectedSkinId) valid = true;
+                if (!valid && catalog.skins[0] != null) _owner.SelectSkin(catalog.skins[0].skinId);
+                foreach (var skin in catalog.skins)
+                {
+                    if (skin == null) continue;
+                    var card = FindDescendant(_left, "Skin_" + skin.skinId);
+                    if (card == null) continue;
+                    var button = card.GetComponent<Button>();
+                    if (button == null) continue;
+                    var captured = skin;
+                    button.onClick.AddListener(() => { _owner.SelectSkin(captured.skinId); RefreshSelection(true); Click(); });
+                    _skinButtons.Add(button);
+                    var title = FindDescendant(card, "SkinName")?.GetComponent<TMP_Text>();
+                    if (title != null) title.text = skin.displayName;
+                    var chip = FindDescendant(card, "ColorChip")?.GetComponent<Image>();
+                    if (chip != null) chip.color = skin.bodyColor;
+                }
+            }
+            foreach (var sprite in Resources.LoadAll<Sprite>("BombTavern/UI/StartGameSetupSheet"))
+            {
+                if (sprite.name == "SetupCardNormal") _skinCardNormal = sprite;
+                if (sprite.name == "SetupCardSelected") _skinCardSelected = sprite;
+            }
+
+            _nameInput = FindDescendant(_right, "PlayerNameInput")?.GetComponent<TMP_InputField>();
+            _addressInput = FindDescendant(_right, "AddressInput")?.GetComponent<TMP_InputField>();
+            _portInput = FindDescendant(_right, "PortInput")?.GetComponent<TMP_InputField>();
+            _addressLabel = FindDescendant(_right, "AddressLabel") as RectTransform;
+            _portRow = FindDescendant(_right, "PortRow") as RectTransform;
+            _networkHint = FindDescendant(_right, "NetworkHint")?.GetComponent<TMP_Text>();
+            _scanButton = FindDescendant(_right, "ScanButton")?.GetComponent<Button>();
+            var start = FindDescendant(_right, "StartButton")?.GetComponent<Button>();
+            _startLabel = FindDescendant(_right, "StartButtonLabel")?.GetComponent<TMP_Text>();
+            if (_nameInput == null || _addressInput == null || _portInput == null ||
+                _networkHint == null || _scanButton == null || start == null || _startLabel == null)
+                throw new MissingReferenceException("StartGameSetup 预制体缺少入局控件");
+            _nameInput.SetTextWithoutNotify(_owner.PlayerName);
+            _nameInput.onValueChanged.AddListener(v => _owner.PlayerName = v);
+            _addressInput.SetTextWithoutNotify(_owner.Address);
+            _addressInput.onValueChanged.AddListener(v => _owner.Address = v);
+            _portInput.SetTextWithoutNotify(_owner.PortText);
+            _portInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+            _portInput.onValueChanged.AddListener(v => _owner.PortText = v);
+            _scanButton.onClick.AddListener(SelectDiscoveredRoom);
+            start.onClick.AddListener(StartGame);
+            for (int i = 0; i < 3; i++)
+            {
+                int index = i;
+                var mode = FindDescendant(_right, "Mode_" + i)?.GetComponent<Button>();
+                if (mode == null) throw new MissingReferenceException("StartGameSetup 预制体缺少 Mode_" + i);
+                mode.onClick.AddListener(() => { _owner.ModeIndex = index; RefreshSelection(true); Click(); });
+                _modeButtons.Add(mode);
+            }
+            return true;
+        }
+
+        static Transform FindDescendant(Transform parent, string name)
+        {
+            foreach (var child in parent.GetComponentsInChildren<Transform>(true))
+                if (child.name == name) return child;
+            return null;
+        }
+
         void BuildStatsPanel()
         {
+            var prefab = Resources.Load<GameObject>("BombTavern/Prefabs/UI/StatisticsPopup");
+            if (prefab != null)
+            {
+                _statisticsView = Instantiate(prefab, _safe, false).GetComponent<StatisticsPopupView>();
+                _statisticsView.gameObject.SetActive(false);
+                return;
+            }
             _statsBlocker = UiKit.Rect(_safe, "StatsBlocker", Vector2.zero, Vector2.one,
                 new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
             _statsBlocker.gameObject.AddComponent<Image>().color = new Color(.01f, .007f, .005f, .76f);
@@ -239,12 +341,14 @@ namespace BombTavern.Runtime
 
         void ShowStats()
         {
+            if (_statisticsView != null) { _statisticsView.Open(); return; }
             _statsBlocker.gameObject.SetActive(true);
             _statsPanel.gameObject.SetActive(true);
         }
 
         void HideStats()
         {
+            if (_statisticsView != null) { _statisticsView.Close(); return; }
             _statsBlocker.gameObject.SetActive(false);
             _statsPanel.gameObject.SetActive(false);
         }
@@ -381,6 +485,22 @@ namespace BombTavern.Runtime
 
         void BuildGameSetupPanel()
         {
+            var template = UiPrefabBindings.Load("GameSetupRules", _safe, this);
+            if (template != null)
+            {
+                var rootRect = (RectTransform)template.transform;
+                rootRect.anchorMin = Vector2.zero;
+                rootRect.anchorMax = Vector2.one;
+                rootRect.sizeDelta = Vector2.zero;
+                rootRect.anchoredPosition = Vector2.zero;
+                _mapButton.onClick.AddListener(CycleMap);
+                _bombButton.onClick.AddListener(CycleBombs);
+                _driftButton.onClick.AddListener(CycleDrift);
+                _turnTimeButton.onClick.AddListener(CycleTurnTime);
+                UiPrefabBindings.ButtonWithText(template, "返回").onClick.AddListener(HideGameSetup);
+                UiPrefabBindings.ButtonWithText(template, "确认并开始").onClick.AddListener(ConfirmGameSetup);
+                return;
+            }
             if (_mapButton == null) _mapButton = UiKit.Btn(_safe, "地图大小", CycleMap);
             if (_bombButton == null) _bombButton = UiKit.Btn(_safe, "炸弹数量", CycleBombs);
             if (_driftButton == null) _driftButton = UiKit.Btn(_safe, "概率偏移", CycleDrift);
@@ -425,6 +545,8 @@ namespace BombTavern.Runtime
         void ShowGameSetup()
         {
             RefreshSettingsLabels();
+            if (_ruleSetupPanel.parent != _safe) _ruleSetupPanel.parent.SetAsLastSibling();
+            else { _ruleSetupBlocker.SetAsLastSibling(); _ruleSetupPanel.SetAsLastSibling(); }
             _ruleSetupOpen = true;
             _ruleSetupBlocker.gameObject.SetActive(true);
             _ruleSetupPanel.gameObject.SetActive(true);
@@ -803,18 +925,19 @@ namespace BombTavern.Runtime
                 if (_tutorial != null && _tutorial.IsOpen) _tutorial.Close();
                 else if (_settingsOpen) ToggleSettings();
                 else if (_ruleSetupOpen) HideGameSetup();
-                else if (_statsPanel != null && _statsPanel.gameObject.activeSelf) HideStats();
+                else if ((_statisticsView != null && _statisticsView.IsOpen) || (_statsPanel != null && _statsPanel.gameObject.activeSelf)) HideStats();
                 else if (_setupVisible) ShowSetup(false);
             }
             if (_settingsOpen) RefreshVoiceTest();
-            if (_lastScreen != new Vector2Int(Screen.width, Screen.height) || _lastSafeArea != Screen.safeArea) ApplyLayout();
+            if (_lastScreen != new Vector2Int(Screen.width, Screen.height) || _lastSafeArea != Screen.safeArea || _lastSafeSize != _safe.rect.size) ApplyLayout();
             RefreshSelection(false);
             if (_scanButton != null && _owner.ModeIndex == 2)
             {
                 var discovery = FindObjectOfType<LanRoomDiscovery>();
                 int count = discovery != null ? discovery.Rooms.Count : 0;
-                _scanButton.GetComponentInChildren<TMP_Text>(true).text = count > 0
-                    ? $"发现 {count} 个房间 · 点击选择"
+                _scanButton.GetComponentInChildren<TMP_Text>(true).text = _setupRoot != null
+                    ? (count > 0 ? $"发现 {count} 间" : "扫描房间")
+                    : count > 0 ? $"发现 {count} 个房间 · 点击选择"
                     : "扫描局域网房间（也可手动填写地址）";
             }
         }
@@ -849,16 +972,34 @@ namespace BombTavern.Runtime
             for (int i = 0; i < _modeButtons.Count; i++)
             {
                 var image = _modeButtons[i].targetGraphic as Image;
-                if (image != null) image.color = i == mode ? UiTheme.Accent : Color.white;
+                  if (image != null)
+                  {
+                      if (_setupRoot != null)
+                      {
+                          image.sprite = Resources.Load<Sprite>("BombTavern/UI/SettingsButton" + (i == mode ? "Gold" : "Dark"));
+                          image.color = Color.white;
+                          _modeButtons[i].GetComponentInChildren<TMP_Text>().color = i == mode ? new Color(.16f, .08f, .03f) : UiTheme.TextHi;
+                      }
+                      else image.color = i == mode ? UiTheme.Accent : Color.white;
+                  }
             }
 
             for (int i = 0; i < _skinButtons.Count; i++)
             {
                 bool selected = _skinButtons[i].name == "Skin_" + skin;
                 var image = _skinButtons[i].targetGraphic as Image;
-                if (image != null) image.color = selected ? UiTheme.Accent : Color.white;
-                var label = _skinButtons[i].GetComponentInChildren<TMP_Text>(true);
-                if (label != null) label.text = (selected ? "▶  " : "     ") + label.text.TrimStart('▶', ' ');
+                if (_setupRoot != null)
+                {
+                    if (image != null) { image.sprite = selected ? _skinCardSelected : _skinCardNormal; image.color = Color.white; }
+                    var check = FindDescendant(_skinButtons[i].transform, "SelectedCheck");
+                    if (check != null) check.gameObject.SetActive(selected);
+                }
+                else
+                {
+                    if (image != null) image.color = selected ? UiTheme.Accent : Color.white;
+                    var label = _skinButtons[i].GetComponentInChildren<TMP_Text>(true);
+                    if (label != null) label.text = (selected ? "▶  " : "     ") + label.text.TrimStart('▶', ' ');
+                }
             }
 
             bool joining = mode == 2;
@@ -869,15 +1010,29 @@ namespace BombTavern.Runtime
             if (_networkHint != null)
                 _networkHint.text = mode == 0 ? "与三名 AI 对局，立即进入。"
                     : mode == 1 ? "创建房间后，在大厅把地址告诉其他玩家。"
-                    : "局域网可扫描；Radmin 填房主 26.x；樱花穿透填服务器域名，并在端口栏填远程端口。";
+                      : "局域网可扫描；Radmin 填房主 26.x。\n穿透填域名，端口使用面板远程端口。";
             if (_startLabel != null)
                 _startLabel.text = mode == 0 ? "开 始 游 戏" : mode == 1 ? "创 建 房 间" : "加 入 房 间";
         }
 
         void ApplyLayout()
         {
+            Canvas.ForceUpdateCanvases();
             _lastScreen = new Vector2Int(Screen.width, Screen.height);
             _lastSafeArea = Screen.safeArea;
+            _lastSafeSize = _safe.rect.size;
+            if (_setupRoot != null)
+            {
+                _setupRoot.anchorMin = _setupRoot.anchorMax = new Vector2(.5f, .5f);
+                _setupRoot.sizeDelta = new Vector2(1920f, 1080f);
+                _setupRoot.anchoredPosition = Vector2.zero;
+                float fit = Mathf.Min(_safe.rect.width / 1920f, _safe.rect.height / 1080f);
+                _setupRoot.localScale = Vector3.one * fit;
+                TavernSettingsLayout.FitToScreen(_settingsPanel);
+                if (_ruleSetupPanel != null)
+                    _ruleSetupPanel.localScale = Vector3.one * UiKit.FitScale(_ruleSetupPanel.sizeDelta);
+                return;
+            }
             bool compact = UiKit.CompactLayout;
             float side = compact ? 540f : 600f;
             float y = UiKit.IsMobile ? 0f : compact ? -104f : -118f;
