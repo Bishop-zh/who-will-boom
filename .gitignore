@@ -46,3 +46,25 @@ Thumbs.db
 
 # Original imported package kept outside Unity while using the built-in renderer.
 /ThirdPartyStaging/
+
+# Private coursework, presentations and local office attachments
+/Report/
+/Reports/
+/Deliverables/
+/ppt_work/
+*.ppt
+*.pptx
+*.pptm
+*.doc
+*.docx
+*.docm
+*.dotx
+*实验报告*
+*课程报告*
+*课程设计报告*
+*大作业报告*
+*汇报*
+*答辩*
+
+# Workstation configuration is private
+/Docs/MCP_SERVERS.md
