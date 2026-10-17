@@ -1,4 +1,4 @@
-using BombTavern.Net;
+﻿using BombTavern.Net;
 using UnityEngine;
 
 namespace BombTavern.Runtime
@@ -31,6 +31,11 @@ namespace BombTavern.Runtime
                 ? cli.mode
                 : (SessionContext.Instance != null ? SessionContext.Instance.mode : GameMode.SinglePlayer);
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+            wanted = GameMode.SinglePlayer;
+            if (SessionContext.Instance != null) SessionContext.Instance.mode = wanted;
+            if (lan != null) lan.enabled = false;
+#endif
             // 必须在 GameDirector.Start 之前写进去
             if (director != null) director.mode = wanted;
 

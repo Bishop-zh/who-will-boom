@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -6,6 +6,9 @@ using System.Threading;
 using BombTavern.Net;
 using LiarsBar;
 using UnityEngine;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using Microphone = BombTavern.Runtime.BrowserMicrophoneUnavailable;
+#endif
 
 namespace BombTavern.Runtime
 {
@@ -169,6 +172,12 @@ namespace BombTavern.Runtime
 
         void Start()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            enableVoice = false;
+            MicrophoneTestStatus = "网页 AI 试玩版不提供局域网语音";
+            enabled = false;
+            return;
+#endif
             // 自动化/服务器模式没有真实音频设备。这里必须在访问 Microphone 前退出，
             // 否则核心玩法测试会被无关的设备初始化错误污染。
             if (Application.isBatchMode)

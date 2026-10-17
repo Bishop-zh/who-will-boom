@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using BombTavern.Config;
 using BombTavern.Net;
 using UnityEngine;
@@ -82,7 +82,18 @@ namespace BombTavern.Runtime
         internal string PlayerName { get => _playerName; set => _playerName = value; }
         internal string Address { get => _address; set => _address = value; }
         internal string PortText { get => _port; set => _port = value; }
-        internal int ModeIndex { get => (int)_mode; set => _mode = (Mode)Mathf.Clamp(value, 0, 2); }
+        internal int ModeIndex
+        {
+            get => (int)_mode;
+            set
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                _mode = Mode.Single;
+#else
+                _mode = (Mode)Mathf.Clamp(value, 0, 2);
+#endif
+            }
+        }
         internal SkinCatalog SkinCatalog => SessionContext.Instance != null ? SessionContext.Instance.skinCatalog : null;
         internal string SelectedSkinId => SessionContext.Instance != null ? SessionContext.Instance.skinId : string.Empty;
 

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using BombTavern.Config;
 using BombTavern.Net;
 using TMPro;
@@ -730,8 +730,10 @@ namespace BombTavern.Runtime
         void LoadRuntimeSettings()
         {
             AudioListener.volume = PlayerPrefs.GetFloat("BombTavern.Volume", 1f);
+#if !UNITY_WEBGL || UNITY_EDITOR
             if (PlayerPrefs.HasKey("BombTavern.Fullscreen"))
                 Screen.fullScreen = PlayerPrefs.GetInt("BombTavern.Fullscreen", 1) != 0;
+#endif
             QualitySettings.vSyncCount = PlayerPrefs.GetInt("BombTavern.VSync", QualitySettings.vSyncCount);
         }
 
@@ -971,6 +973,9 @@ namespace BombTavern.Runtime
 
             for (int i = 0; i < _modeButtons.Count; i++)
             {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                _modeButtons[i].gameObject.SetActive(i == 0);
+#endif
                 var image = _modeButtons[i].targetGraphic as Image;
                   if (image != null)
                   {

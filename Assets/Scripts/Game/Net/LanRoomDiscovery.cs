@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
@@ -33,6 +33,11 @@ namespace BombTavern.Net
 
         void Start()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Browser demo is offline: never open native sockets or background threads.
+            enabled = false;
+            return;
+#endif
             _lan = FindObjectOfType<LanNetworkManager>();
             try
             {

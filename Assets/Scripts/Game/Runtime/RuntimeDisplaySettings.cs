@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using BombTavern.Net;
 using TMPro;
 using UnityEngine;
@@ -34,6 +34,11 @@ namespace BombTavern.Runtime
             // 无画面自动化会在同一台机器同时启动主机和客户端，
             // 两个进程不应竞争写入同一份 PlayerPrefs，而且它们本来也没有显示器。
             if (Application.isBatchMode) return;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Browser canvas and user-initiated fullscreen belong to the hosting page.
+            Application.targetFrameRate = 60;
+            return;
+#endif
 
             // 仅供自动化视觉回归使用，不写 PlayerPrefs，不影响玩家设置。
             if (TryReadTestResolution(out Vector2Int testResolution))
