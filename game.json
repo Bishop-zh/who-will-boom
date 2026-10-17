@@ -1,0 +1,12 @@
+{
+  "title": "Who Will BOOM",
+  "subtitle": "单机 / AI 网页试玩",
+  "anchor": "boom",
+  "controls": "点击开始游戏，选择角色后进入单人对局；按游戏内提示操作棋盘和道具，可切换 AI 托管。",
+  "mode": "单机 + 三名 AI · 联机与语音仅桌面版",
+  "slug": "who-will-boom",
+  "loader": "Build/who-will-boom.loader.js",
+  "dataUrl": "Build/who-will-boom.data.unityweb",
+  "frameworkUrl": "Build/who-will-boom.framework.js.unityweb",
+  "codeUrl": "Build/who-will-boom.wasm.unityweb"
+}
