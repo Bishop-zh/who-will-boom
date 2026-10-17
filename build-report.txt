@@ -1,4 +1,4 @@
 Result: Succeeded
 Unity: 2022.3.62f3c1
-Bytes: 30400305
+Bytes: 30399953
 Errors: 0
